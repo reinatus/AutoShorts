@@ -13,10 +13,9 @@ load_dotenv()
 
 
 class MoneyPrinterTurboClient:
-    def __init__(self, base_url: str | None = None, api_key: str | None = None, video_source: str | None = None):
+    def __init__(self, base_url: str | None = None, api_key: str | None = None):
         self.base_url = (base_url or os.getenv("MPT_API_URL") or "http://127.0.0.1:8080").rstrip("/")
         self.api_key = api_key if api_key is not None else os.getenv("MPT_API_KEY", "")
-        self.video_source = video_source or os.getenv("MPT_VIDEO_SOURCE") or "wavespeed"
 
     @property
     def headers(self) -> dict[str, str]:
@@ -31,21 +30,29 @@ class MoneyPrinterTurboClient:
         except requests.RequestException:
             return False
 
-    def payload(self, plan: ShortPlan, preset: ChannelPreset) -> dict:
-        # Never silently fall back to generic stock. Each visual term is a scene-specific
-        # photorealistic generation prompt. For scenes marked real_footage, the UI warns
-        # the editor to replace the generated reconstruction with verified footage.
+    def upload_material(self, path: str) -> str:
+        headers = {k: v for k, v in self.headers.items() if k != "Content-Type"}
+        with open(path, "rb") as f:
+            r = requests.post(f"{self.base_url}/api/v1/video_materials", headers=headers, files={"file": (os.path.basename(path), f)}, timeout=120)
+        r.raise_for_status()
+        data = r.json().get("data", r.json())
+        return data.get("file") or data.get("filename") or os.path.basename(path)
+
+    def payload(self, plan: ShortPlan, preset: ChannelPreset, material_files: list[str]) -> dict:
+        if not material_files:
+            raise ValueError("No hay materiales específicos aprobados; AutoShorts no rellena con stock genérico.")
         return {
             "video_subject": plan.subject,
             "video_script": plan.script,
-            "video_terms": plan.visual_terms,
+            "video_terms": [],
             "video_aspect": "9:16",
             "video_fit_mode": "cover",
             "video_concat_mode": "sequential",
             "video_transition_mode": "Shuffle",
             "video_clip_duration": preset.clip_duration,
             "video_count": 1,
-            "video_source": self.video_source,
+            "video_source": "local",
+            "video_materials": [{"provider": "local", "url": name, "duration": 0} for name in material_files],
             "video_language": preset.language,
             "voice_name": preset.voice_name,
             "voice_rate": preset.voice_rate,
@@ -58,19 +65,18 @@ class MoneyPrinterTurboClient:
             "subtitle_animation": "pop_spring",
             "font_size": 72,
             "stroke_width": 2.0,
-            "match_materials_to_script": True,
             "paragraph_number": 1,
         }
 
-    def create_video(self, plan: ShortPlan, preset: ChannelPreset) -> dict:
-        response = requests.post(f"{self.base_url}/api/v1/videos", headers=self.headers, json=self.payload(plan, preset), timeout=30)
-        response.raise_for_status()
-        return response.json()
+    def create_video(self, plan: ShortPlan, preset: ChannelPreset, material_files: list[str]) -> dict:
+        r = requests.post(f"{self.base_url}/api/v1/videos", headers=self.headers, json=self.payload(plan, preset, material_files), timeout=30)
+        r.raise_for_status()
+        return r.json()
 
     def task(self, task_id: str) -> dict:
-        response = requests.get(f"{self.base_url}/api/v1/tasks/{task_id}", headers=self.headers, timeout=15)
-        response.raise_for_status()
-        return response.json()
+        r = requests.get(f"{self.base_url}/api/v1/tasks/{task_id}", headers=self.headers, timeout=15)
+        r.raise_for_status()
+        return r.json()
 
     @staticmethod
     def extract_task_id(result: dict) -> str:
@@ -88,22 +94,17 @@ class MoneyPrinterTurboClient:
             last = self.task(task_id)
             data = last.get("data", last)
             state = str(data.get("state") or data.get("status") or "").lower() if isinstance(data, dict) else ""
-            if state in {"success", "completed", "complete", "done"}:
-                return last
-            if state in {"failed", "error", "cancelled", "canceled"}:
-                raise RuntimeError(f"MoneyPrinterTurbo terminó con estado {state}: {last}")
+            if state in {"success", "completed", "complete", "done"}: return last
+            if state in {"failed", "error", "cancelled", "canceled"}: raise RuntimeError(str(last))
             time.sleep(interval)
-        raise TimeoutError(f"El render superó {timeout}s. Último estado: {last}")
+        raise TimeoutError(str(last))
 
     def video_urls(self, task_result: dict) -> list[str]:
         data = task_result.get("data", task_result)
-        if not isinstance(data, dict):
-            return []
+        if not isinstance(data, dict): return []
         candidates = []
         for key in ("videos", "video_files", "video_urls", "combined_videos"):
             value = data.get(key)
-            if isinstance(value, str):
-                candidates.append(value)
-            elif isinstance(value, list):
-                candidates.extend(x for x in value if isinstance(x, str))
+            if isinstance(value, str): candidates.append(value)
+            elif isinstance(value, list): candidates.extend(x for x in value if isinstance(x, str))
         return [x if x.startswith(("http://", "https://")) else urljoin(self.base_url + "/", x.lstrip("/")) for x in candidates]
