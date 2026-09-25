@@ -1,0 +1,22 @@
+services:
+  moneyprinterturbo:
+    image: ghcr.io/harry0703/moneyprinterturbo:latest
+    container_name: moneyprinterturbo
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mpt-config.toml:/MoneyPrinterTurbo/config.toml
+      - ./storage/mpt:/MoneyPrinterTurbo/storage
+    restart: unless-stopped
+
+  autoshorts:
+    build: .
+    container_name: autoshorts
+    environment:
+      MPT_API_URL: http://moneyprinterturbo:8080
+      MPT_API_KEY: ${MPT_API_KEY:-}
+    ports:
+      - "8501:8501"
+    depends_on:
+      - moneyprinterturbo
+    restart: unless-stopped
