@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import os
+import time
+from urllib.parse import urljoin
+
 import requests
 from dotenv import load_dotenv
 
@@ -17,9 +20,17 @@ class MoneyPrinterTurboClient:
     @property
     def headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
+        # MoneyPrinterTurbo expects x-api-key when app.api_key is configured.
         if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+            headers["x-api-key"] = self.api_key
         return headers
+
+    def health(self) -> bool:
+        try:
+            response = requests.get(f"{self.base_url}/ping", timeout=5)
+            return response.ok
+        except requests.RequestException:
+            return False
 
     def payload(self, plan: ShortPlan, preset: ChannelPreset) -> dict:
         return {
@@ -67,3 +78,39 @@ class MoneyPrinterTurboClient:
         )
         response.raise_for_status()
         return response.json()
+
+    @staticmethod
+    def extract_task_id(result: dict) -> str:
+        data = result.get("data", result)
+        for key in ("task_id", "id"):
+            value = data.get(key) if isinstance(data, dict) else None
+            if value:
+                return str(value)
+        raise ValueError(f"MoneyPrinterTurbo no devolvió task_id: {result}")
+
+    def wait_for_video(self, task_id: str, timeout: int = 1800, interval: int = 5) -> dict:
+        deadline = time.time() + timeout
+        last = {}
+        while time.time() < deadline:
+            last = self.task(task_id)
+            data = last.get("data", last)
+            state = str(data.get("state") or data.get("status") or "").lower() if isinstance(data, dict) else ""
+            if state in {"success", "completed", "complete", "done"}:
+                return last
+            if state in {"failed", "error", "cancelled", "canceled"}:
+                raise RuntimeError(f"MoneyPrinterTurbo terminó con estado {state}: {last}")
+            time.sleep(interval)
+        raise TimeoutError(f"El render superó {timeout}s. Último estado: {last}")
+
+    def video_urls(self, task_result: dict) -> list[str]:
+        data = task_result.get("data", task_result)
+        if not isinstance(data, dict):
+            return []
+        candidates = []
+        for key in ("videos", "video_files", "video_urls", "combined_videos"):
+            value = data.get(key)
+            if isinstance(value, str):
+                candidates.append(value)
+            elif isinstance(value, list):
+                candidates.extend(x for x in value if isinstance(x, str))
+        return [x if x.startswith(("http://", "https://")) else urljoin(self.base_url + "/", x.lstrip("/")) for x in candidates]
