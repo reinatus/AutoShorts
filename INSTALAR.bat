@@ -10,8 +10,6 @@ echo.
 
 set "PYEXE="
 set "PYARGS="
-
-rem Prefer Python 3.11 when installed, but do not assume it exists just because py.exe exists.
 where py >nul 2>nul
 if not errorlevel 1 (
   py -3.11 -c "import sys" >nul 2>nul
@@ -20,8 +18,6 @@ if not errorlevel 1 (
     set "PYARGS=-3.11"
   )
 )
-
-rem Fall back to a normal python installation (3.10+).
 if not defined PYEXE (
   where python >nul 2>nul
   if not errorlevel 1 (
@@ -29,8 +25,6 @@ if not defined PYEXE (
     if not errorlevel 1 set "PYEXE=python"
   )
 )
-
-rem py launcher may have another usable 3.x version.
 if not defined PYEXE (
   where py >nul 2>nul
   if not errorlevel 1 (
@@ -41,30 +35,20 @@ if not defined PYEXE (
     )
   )
 )
-
 if not defined PYEXE (
   echo [ERROR] No encuentro Python 3.10 o superior instalado.
-  echo.
-  echo Si tienes el comando py pero no Python instalado, ejecuta:
-  echo     py install 3.11
-  echo.
-  echo Despues vuelve a ejecutar INSTALAR.bat.
+  echo Ejecuta: py install 3.11
   pause
   exit /b 1
 )
 
 echo Python encontrado:
 %PYEXE% %PYARGS% --version
-
-echo.
 if not exist ".venv\Scripts\python.exe" (
   echo [1/3] Creando entorno virtual...
   %PYEXE% %PYARGS% -m venv .venv
   if errorlevel 1 goto :error
-) else (
-  echo [1/3] Entorno virtual ya existe.
-)
-
+) else echo [1/3] Entorno virtual ya existe.
 if not exist ".venv\Scripts\python.exe" goto :error
 
 echo [2/3] Actualizando pip...
@@ -78,19 +62,30 @@ if errorlevel 1 goto :error
 if not exist ".env" (
   >.env echo MPT_API_URL=http://127.0.0.1:8080
   >>.env echo MPT_API_KEY=
+  >>.env echo IMAGE_API_URL=http://127.0.0.1:8000
+  >>.env echo IMAGE_MODEL=OpenVINO/stable-diffusion-v1-5-int8-ov
 )
 
 echo.
 echo ========================================
-echo Instalacion de AutoShorts terminada.
-echo Ejecuta INICIAR.bat
+echo AutoShorts instalado.
 echo ========================================
+echo.
+choice /C SN /N /M "Quieres instalar ahora la IA de imagen local y gratuita? [S/N]: "
+if errorlevel 2 goto :done
+if errorlevel 1 call INSTALAR_IA.bat
+
+:done
+echo.
+echo Para usarlo:
+echo   1. INICIAR_IA.bat
+ echo  2. Arranca MoneyPrinterTurbo
+ echo  3. INICIAR.bat
 pause
 exit /b 0
 
 :error
 echo.
 echo [ERROR] La instalacion ha fallado.
-echo No se continuara si no existe el entorno virtual.
 pause
 exit /b 1
