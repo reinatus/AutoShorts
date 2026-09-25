@@ -1,14 +1,16 @@
 import json
+import tempfile
 
 import streamlit as st
 
 from autoshorts.director import build_plan
+from autoshorts.free_media import best_specific_media, download
 from autoshorts.mpt import MoneyPrinterTurboClient
 from autoshorts.presets import PRESETS, get_preset
 
 st.set_page_config(page_title="AutoShorts", page_icon="🎬", layout="wide")
 st.title("AutoShorts")
-st.caption("Idea → storyboard → escenas específicas → vídeo fotorealista → voz → subtítulos → MP4 vertical")
+st.caption("Shorts con material real específico · sin APIs de vídeo de pago")
 
 with st.sidebar:
     st.header("Canal")
@@ -16,78 +18,83 @@ with st.sidebar:
     preset = get_preset(channel_slug)
     st.write(f"{preset.min_duration}–{preset.max_duration} s · {preset.scenes} escenas · 9:16")
     st.divider()
-    st.header("Motor visual")
-    video_source = st.selectbox("Generador", ["wavespeed", "ofox", "volcengine_seedance", "muapi"], index=0)
-    st.caption("No se usa stock genérico. Cada escena se genera a partir de un prompt específico.")
-    st.divider()
     st.header("MoneyPrinterTurbo")
     mpt_url = st.text_input("API", "http://127.0.0.1:8080")
     mpt_key = st.text_input("API key", type="password")
     if st.button("Comprobar motor", use_container_width=True):
-        client = MoneyPrinterTurboClient(mpt_url, mpt_key, video_source)
-        st.success("MoneyPrinterTurbo responde") if client.health() else st.error("No hay conexión con MoneyPrinterTurbo")
+        st.success("MoneyPrinterTurbo responde") if MoneyPrinterTurboClient(mpt_url, mpt_key).health() else st.error("No hay conexión")
 
 subject = st.text_input("Tema", "La isla donde está prácticamente prohibido morir")
-manual_script = st.text_area("Guion manual (opcional para el tema demo)", height=150, placeholder="Para un tema nuevo pega aquí el guion. AutoShorts lo divide y crea las escenas.")
+manual_script = st.text_area("Guion manual (opcional para el tema demo)", height=130)
 
-col1, col2 = st.columns(2)
-with col1:
-    prepare = st.button("Preparar storyboard", type="primary", use_container_width=True)
-with col2:
-    generate = st.button("Generar vídeo", use_container_width=True)
+c1, c2 = st.columns(2)
+prepare = c1.button("Buscar material y preparar", type="primary", use_container_width=True)
+generate = c2.button("Generar vídeo", use_container_width=True)
 
-if prepare or generate:
+if prepare:
     try:
-        st.session_state["plan"] = build_plan(subject, preset, manual_script)
+        plan = build_plan(subject, preset, manual_script)
+        resolved = []
+        with st.spinner("Buscando material específico escena por escena…"):
+            for scene in plan.scenes:
+                # Search with the factual subject plus the scene description. No generic fallback.
+                query = f"{subject} {scene.visual_query.split('.')[0]}"
+                candidate = best_specific_media(query)
+                resolved.append(candidate)
+        st.session_state["plan"] = plan
+        st.session_state["media"] = resolved
     except Exception as exc:
         st.error(str(exc))
 
 plan = st.session_state.get("plan")
+media = st.session_state.get("media", [])
 if plan:
-    st.subheader("Hook")
-    st.info(plan.hook)
-    if plan.requires_real_footage:
-        st.warning("Hay escenas que representan lugares concretos. AutoShorts puede generar una recreación para el montaje, pero están marcadas para sustituirlas por metraje real verificado cuando la imagen deba presentarse como auténtica.")
-
-    st.subheader("Storyboard visual")
-    for scene in plan.scenes:
-        icon = "🎥 REAL" if scene.visual_mode == "real_footage" else "✨ IA"
-        with st.expander(f"Escena {scene.index} · {scene.duration:.0f}s · {icon}", expanded=True):
+    st.subheader("Storyboard y material")
+    missing = 0
+    for scene, candidate in zip(plan.scenes, media):
+        with st.expander(f"Escena {scene.index} · {scene.duration:.0f}s", expanded=True):
             st.write(scene.narration)
-            st.code(scene.visual_query, language=None)
-            if scene.on_screen_label:
-                st.caption(f"Etiqueta si se usa la generación: {scene.on_screen_label}")
+            if candidate:
+                st.success(f"Encontrado · {candidate.license_name} · relevancia {candidate.score:.2f}")
+                st.write(candidate.title)
+                if candidate.mime.startswith("image/"): st.image(candidate.url)
+                elif candidate.mime.startswith("video/"): st.video(candidate.url)
+                st.caption(candidate.page_url)
+            else:
+                missing += 1
+                st.error("Sin material suficientemente específico. No se sustituirá por stock genérico.")
 
-    client = MoneyPrinterTurboClient(mpt_url, mpt_key, video_source)
-    with st.expander("Payload para MoneyPrinterTurbo"):
-        st.code(json.dumps(client.payload(plan, preset), ensure_ascii=False, indent=2), language="json")
+    if missing:
+        st.warning(f"Faltan {missing} escenas. El render queda bloqueado hasta tener material relacionado para todas.")
 
     if generate:
-        try:
-            if not client.health():
-                raise ConnectionError("MoneyPrinterTurbo no responde. Arranca primero el motor.")
-            with st.spinner(f"Generando escenas con {video_source}…"):
-                result = client.create_video(plan, preset)
-                task_id = client.extract_task_id(result)
-                st.session_state["task_id"] = task_id
-            st.success(f"Render iniciado · {task_id}")
-        except Exception as exc:
-            st.error(str(exc))
+        if missing or len(media) != len(plan.scenes):
+            st.error("Primero pulsa ‘Buscar material y preparar’ y resuelve las escenas sin material.")
+        else:
+            try:
+                client = MoneyPrinterTurboClient(mpt_url, mpt_key)
+                if not client.health(): raise ConnectionError("MoneyPrinterTurbo no responde.")
+                with tempfile.TemporaryDirectory() as tmp:
+                    uploaded = []
+                    for scene, candidate in zip(plan.scenes, media):
+                        local = download(candidate, tmp, f"scene_{scene.index:02d}")
+                        uploaded.append(client.upload_material(local))
+                    result = client.create_video(plan, preset, uploaded)
+                    st.session_state["task_id"] = client.extract_task_id(result)
+                st.success(f"Render iniciado · {st.session_state['task_id']}")
+            except Exception as exc:
+                st.error(str(exc))
 
     task_id = st.session_state.get("task_id")
     if task_id:
-        st.subheader("Render")
-        st.code(task_id)
-        if st.button("Actualizar estado"):
-            try:
-                st.session_state["task_status"] = client.task(task_id)
-            except Exception as exc:
-                st.error(str(exc))
+        client = MoneyPrinterTurboClient(mpt_url, mpt_key)
+        if st.button("Actualizar render"):
+            try: st.session_state["task_status"] = client.task(task_id)
+            except Exception as exc: st.error(str(exc))
         status = st.session_state.get("task_status")
         if status:
             st.json(status)
-            for url in client.video_urls(status):
-                st.video(url)
+            for url in client.video_urls(status): st.video(url)
 
 st.divider()
-st.caption("AutoShorts · vídeo generado por escenas. Revisa hechos, derechos y cualquier recreación antes de publicar.")
+st.caption("Material: fuentes gratuitas con licencia identificada. AutoShorts no usa un recurso si no supera el umbral de relevancia.")
