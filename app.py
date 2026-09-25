@@ -13,22 +13,21 @@ st.caption("Idea → storyboard → material → voz → subtítulos → MP4 ver
 
 with st.sidebar:
     st.header("Canal")
-    channel_slug = st.selectbox(
-        "Preset",
-        list(PRESETS.keys()),
-        format_func=lambda slug: PRESETS[slug].name,
-    )
+    channel_slug = st.selectbox("Preset", list(PRESETS.keys()), format_func=lambda slug: PRESETS[slug].name)
     preset = get_preset(channel_slug)
     st.write(f"{preset.min_duration}–{preset.max_duration} s · {preset.scenes} escenas · 9:16")
     st.divider()
     st.header("MoneyPrinterTurbo")
     mpt_url = st.text_input("API", "http://127.0.0.1:8080")
     mpt_key = st.text_input("API key", type="password")
+    if st.button("Comprobar motor", use_container_width=True):
+        client = MoneyPrinterTurboClient(mpt_url, mpt_key)
+        if client.health():
+            st.success("MoneyPrinterTurbo responde")
+        else:
+            st.error("No hay conexión con MoneyPrinterTurbo")
 
-subject = st.text_input(
-    "Tema",
-    "La isla donde está prácticamente prohibido morir",
-)
+subject = st.text_input("Tema", "La isla donde está prácticamente prohibido morir")
 manual_script = st.text_area(
     "Guion manual (opcional para el tema demo)",
     height=150,
@@ -43,8 +42,7 @@ with col2:
 
 if prepare or generate:
     try:
-        plan = build_plan(subject, preset, manual_script)
-        st.session_state["plan"] = plan
+        st.session_state["plan"] = build_plan(subject, preset, manual_script)
     except Exception as exc:
         st.error(str(exc))
 
@@ -52,29 +50,44 @@ plan = st.session_state.get("plan")
 if plan:
     st.subheader("Hook")
     st.info(plan.hook)
-
     st.subheader("Storyboard")
     for scene in plan.scenes:
         with st.expander(f"Escena {scene.index} · {scene.duration:.0f}s", expanded=True):
             st.write(scene.narration)
             st.caption(f"Visual: {scene.visual_query}")
 
+    client = MoneyPrinterTurboClient(mpt_url, mpt_key)
     with st.expander("Payload para MoneyPrinterTurbo"):
-        client = MoneyPrinterTurboClient(mpt_url, mpt_key)
         st.code(json.dumps(client.payload(plan, preset), ensure_ascii=False, indent=2), language="json")
 
     if generate:
         try:
-            client = MoneyPrinterTurboClient(mpt_url, mpt_key)
-            with st.spinner("Enviando trabajo a MoneyPrinterTurbo…"):
+            if not client.health():
+                raise ConnectionError("MoneyPrinterTurbo no responde. Arranca primero el motor en el puerto configurado.")
+            with st.spinner("Creando trabajo de render…"):
                 result = client.create_video(plan, preset)
-            st.success("Trabajo enviado")
-            st.json(result)
+                task_id = client.extract_task_id(result)
+                st.session_state["task_id"] = task_id
+            st.success(f"Render iniciado · {task_id}")
         except Exception as exc:
-            st.error(
-                "No he podido conectar con MoneyPrinterTurbo. Comprueba que su API esté arrancada y que la URL/API key sean correctas."
-            )
-            st.exception(exc)
+            st.error(str(exc))
+
+    task_id = st.session_state.get("task_id")
+    if task_id:
+        st.subheader("Render")
+        st.code(task_id)
+        if st.button("Actualizar estado"):
+            try:
+                status = client.task(task_id)
+                st.session_state["task_status"] = status
+            except Exception as exc:
+                st.error(str(exc))
+        status = st.session_state.get("task_status")
+        if status:
+            st.json(status)
+            urls = client.video_urls(status)
+            for url in urls:
+                st.video(url)
 
 st.divider()
-st.caption("V1 · No publica automáticamente. Revisa los hechos y el vídeo antes de subirlo.")
+st.caption("V1 · Revisa hechos, derechos de uso y resultado final antes de publicar.")
