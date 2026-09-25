@@ -16,7 +16,7 @@ class ChannelPreset:
     voice_rate: float = 1.08
     bgm_volume: float = 0.12
     clip_duration: int = 5
-    visual_style: str = "realistic documentary, cinematic, high detail, vertical composition"
+    visual_style: str = "photorealistic documentary footage, natural light, realistic camera motion, high detail, vertical 9:16"
     editorial_rules: List[str] = field(default_factory=list)
 
     def to_dict(self):
@@ -29,6 +29,9 @@ class Scene:
     narration: str
     visual_query: str
     duration: float = 5.0
+    visual_mode: str = "generated_video"
+    factual_visual: bool = False
+    on_screen_label: str = ""
 
     def to_dict(self):
         return asdict(self)
@@ -45,7 +48,12 @@ class ShortPlan:
     def visual_terms(self) -> List[str]:
         return [scene.visual_query for scene in self.scenes]
 
+    @property
+    def requires_real_footage(self) -> bool:
+        return any(scene.visual_mode == "real_footage" for scene in self.scenes)
+
     def to_dict(self):
         data = asdict(self)
         data["visual_terms"] = self.visual_terms
+        data["requires_real_footage"] = self.requires_real_footage
         return data
