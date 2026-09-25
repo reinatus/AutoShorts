@@ -13,26 +13,28 @@ load_dotenv()
 
 
 class MoneyPrinterTurboClient:
-    def __init__(self, base_url: str | None = None, api_key: str | None = None):
+    def __init__(self, base_url: str | None = None, api_key: str | None = None, video_source: str | None = None):
         self.base_url = (base_url or os.getenv("MPT_API_URL") or "http://127.0.0.1:8080").rstrip("/")
         self.api_key = api_key if api_key is not None else os.getenv("MPT_API_KEY", "")
+        self.video_source = video_source or os.getenv("MPT_VIDEO_SOURCE") or "wavespeed"
 
     @property
     def headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
-        # MoneyPrinterTurbo expects x-api-key when app.api_key is configured.
         if self.api_key:
             headers["x-api-key"] = self.api_key
         return headers
 
     def health(self) -> bool:
         try:
-            response = requests.get(f"{self.base_url}/ping", timeout=5)
-            return response.ok
+            return requests.get(f"{self.base_url}/ping", timeout=5).ok
         except requests.RequestException:
             return False
 
     def payload(self, plan: ShortPlan, preset: ChannelPreset) -> dict:
+        # Never silently fall back to generic stock. Each visual term is a scene-specific
+        # photorealistic generation prompt. For scenes marked real_footage, the UI warns
+        # the editor to replace the generated reconstruction with verified footage.
         return {
             "video_subject": plan.subject,
             "video_script": plan.script,
@@ -43,7 +45,7 @@ class MoneyPrinterTurboClient:
             "video_transition_mode": "Shuffle",
             "video_clip_duration": preset.clip_duration,
             "video_count": 1,
-            "video_source": "pexels",
+            "video_source": self.video_source,
             "video_language": preset.language,
             "voice_name": preset.voice_name,
             "voice_rate": preset.voice_rate,
@@ -61,21 +63,12 @@ class MoneyPrinterTurboClient:
         }
 
     def create_video(self, plan: ShortPlan, preset: ChannelPreset) -> dict:
-        response = requests.post(
-            f"{self.base_url}/api/v1/videos",
-            headers=self.headers,
-            json=self.payload(plan, preset),
-            timeout=30,
-        )
+        response = requests.post(f"{self.base_url}/api/v1/videos", headers=self.headers, json=self.payload(plan, preset), timeout=30)
         response.raise_for_status()
         return response.json()
 
     def task(self, task_id: str) -> dict:
-        response = requests.get(
-            f"{self.base_url}/api/v1/tasks/{task_id}",
-            headers=self.headers,
-            timeout=15,
-        )
+        response = requests.get(f"{self.base_url}/api/v1/tasks/{task_id}", headers=self.headers, timeout=15)
         response.raise_for_status()
         return response.json()
 
