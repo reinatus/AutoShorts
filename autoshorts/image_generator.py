@@ -23,26 +23,27 @@ class LocalImageGenerator:
         self.model = model or os.getenv("IMAGE_MODEL") or "OpenVINO/stable-diffusion-v1-5-int8-ov"
 
     def health(self) -> bool:
-        for endpoint in ("/v3/models", "/v1/models"):
-            try:
-                if requests.get(self.base_url + endpoint, timeout=3).ok:
-                    return True
-            except requests.RequestException:
-                pass
-        return False
+        try:
+            return requests.get(self.base_url + "/v3/models", timeout=5).ok
+        except requests.RequestException:
+            return False
 
     def generate(self, scene_prompt: str, style_name: str, output: str, seed: int = 1337) -> str:
         style = STYLE_PRESETS[style_name]
-        prompt = f"{scene_prompt}. {style}. vertical composition for a 9:16 short, same art direction across every scene"
+        prompt = (
+            f"{scene_prompt}. {style}. portrait vertical composition, central readable subject, "
+            "same art direction, materials, lighting language and rendering style across every scene"
+        )
         payload = {
             "model": self.model,
             "prompt": prompt,
             "size": "512x768",
             "n": 1,
-            "response_format": "b64_json",
-            "seed": seed,
+            "rng_seed": seed,
+            "num_inference_steps": 24,
+            "guidance_scale": 7.0,
         }
-        r = requests.post(self.base_url + "/v3/images/generations", json=payload, timeout=900)
+        r = requests.post(self.base_url + "/v3/images/generations", json=payload, timeout=1800)
         r.raise_for_status()
         item = r.json()["data"][0]
         Path(output).parent.mkdir(parents=True, exist_ok=True)
@@ -53,5 +54,5 @@ class LocalImageGenerator:
             img.raise_for_status()
             Path(output).write_bytes(img.content)
         else:
-            raise RuntimeError("El generador no devolvió una imagen")
+            raise RuntimeError("El generador local no devolvió una imagen")
         return output
