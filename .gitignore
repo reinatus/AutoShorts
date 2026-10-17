@@ -1,5 +1,10 @@
 .env
 .venv/
+.tools/
+.cache/
+godot_pilot/.godot/
+godot_pilot/output/
+.verification/
 venv/
 __pycache__/
 *.pyc

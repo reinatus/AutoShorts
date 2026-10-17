@@ -2,6 +2,8 @@
 
 Fábrica de vídeos verticales 9:16 construida sobre MoneyPrinterTurbo.
 
+> **Piloto nuevo:** la ruta `godot_pilot` genera 40 segundos de animación 2D real, sin imágenes estáticas ni APIs de pago. Consulta [la arquitectura y los límites](docs/ARQUITECTURA_GODOT.md).
+
 ## Objetivo
 
 Convertir un canal/preset en una cola de Shorts: idea → hook → guion → storyboard → términos visuales → MoneyPrinterTurbo → MP4.
@@ -38,6 +40,16 @@ MP4 1080x1920
 ```
 
 ## Arranque
+
+### Piloto procedural recomendado (Windows)
+
+1. Doble clic en `INSTALAR_PILOTO.bat`.
+2. Doble clic en `RENDER_PILOTO.bat`.
+3. Abre `godot_pilot\output\autoshorts_pilot.mp4`.
+
+La primera ejecución descarga Godot y FFmpeg de forma local al proyecto. El render base no usa claves ni servicios facturables y aplica un tope de 0,50 USD mediante `autoshorts/budget.py` para futuras extensiones.
+
+### Flujo heredado MoneyPrinterTurbo
 
 1. Arranca MoneyPrinterTurbo y deja su API disponible en `http://127.0.0.1:8080`.
 2. Copia `.env.example` a `.env` y configura las claves que quieras usar.
