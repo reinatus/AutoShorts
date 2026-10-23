@@ -8,7 +8,15 @@ Aplicación local para gestionar nichos, priorizar ideas, producir Shorts y desc
 2. Haz doble clic en `INICIAR.bat`.
 3. El estudio se abre en `http://localhost:8501`.
 
-La interfaz incluye **Resumen**, **Banco de ideas**, **Crear vídeo**, **Nichos** y **Entregables**. El primer nicho es `Mentes Salvajes`, con 12 ideas editoriales. El vídeo del pulpo dispone ya de render completo; el resto queda bloqueado antes del render hasta incorporar metraje real y fuentes verificadas.
+La interfaz incluye **Estudio**, **Ideas**, **Producción**, **Nichos** y **Entregables**. La vista inicial muestra toda la cartera y permite cambiar de temática sin salir del flujo de trabajo. Incluye cinco identidades editoriales de partida:
+
+- `Mentes Salvajes`;
+- `Historia Oculta`;
+- `Lugares Límite`;
+- `Ciencia Invisible`;
+- `Futuro Real`.
+
+Cada idea aplica automáticamente el tono, color, política visual, CTA y metadatos de su nicho. El vídeo del pulpo dispone ya de render completo; el resto queda bloqueado antes del render hasta incorporar metraje real y fuentes verificadas.
 
 Cada proyecto genera:
 
