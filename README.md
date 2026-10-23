@@ -16,7 +16,7 @@ La interfaz está organizada por **proyectos/canales**. Cada proyecto tiene su p
 - `Ciencia Invisible`;
 - `Futuro Real`.
 
-Cada tarjeta representa una idea concreta de vídeo y abre directamente su generador. El panel aplica automáticamente el tono, color, política visual, CTA y metadatos del proyecto. El vídeo del pulpo dispone ya de generación final completa desde el panel. Las demás ideas permiten preparar la producción y cargar metraje real aprobado; el montaje final permanece bloqueado hasta disponer de material suficiente y validado.
+Cada tarjeta representa una idea concreta de vídeo y abre directamente su generador. El panel aplica automáticamente el tono, color, política visual, CTA y metadatos del proyecto. El vídeo del pulpo dispone ya de generación final completa desde el panel. Para las demás ideas se pueden cargar tres o más clips reales aprobados y generar también desde el panel un MP4 de 40 segundos con narración local, subtítulos, cierre, portada y textos de publicación.
 
 Cada proyecto genera:
 
