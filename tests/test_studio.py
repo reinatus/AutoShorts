@@ -1,13 +1,30 @@
 from pathlib import Path
 
+import json
+
 from autoshorts.studio import DEFAULT_IDEAS, DEFAULT_NICHE, create_project, ensure_library, publication_package
 
 
 def test_default_library_has_expandable_niche_and_ideas(tmp_path: Path):
     niches, ideas = ensure_library(tmp_path)
     assert niches[0].slug == "mentes-salvajes"
-    assert len(ideas) >= 10
+    assert len(niches) >= 5
+    assert len({item.niche_slug for item in ideas}) >= 5
+    assert len(ideas) >= 25
     assert any(item.renderer == "octopus" for item in ideas)
+
+
+def test_existing_library_is_migrated_without_losing_custom_data(tmp_path: Path):
+    custom_niche = {**DEFAULT_NICHE.__dict__, "slug": "mi-canal", "name": "Mi canal"}
+    custom_idea = {**DEFAULT_IDEAS[0].__dict__, "slug": "mi-idea", "niche_slug": "mi-canal"}
+    (tmp_path / "niches.json").write_text(json.dumps([custom_niche]), encoding="utf-8")
+    (tmp_path / "ideas.json").write_text(json.dumps([custom_idea]), encoding="utf-8")
+
+    niches, ideas = ensure_library(tmp_path)
+
+    assert any(item.slug == "mi-canal" for item in niches)
+    assert any(item.slug == "mi-idea" for item in ideas)
+    assert any(item.slug == "futuro-real" for item in niches)
 
 
 def test_publication_package_is_complete():
