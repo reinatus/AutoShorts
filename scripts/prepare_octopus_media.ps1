@@ -6,7 +6,9 @@ New-Item -ItemType Directory -Force $media, $generated | Out-Null
 
 $downloads = @(
     @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Octopus%20Vulgaris%20-%20Poulpe%20commun.webm", (Join-Path $media "common_octopus.webm")),
-    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Octopus.ogv", (Join-Path $media "reef_octopus.ogv"))
+    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Octopus.ogv", (Join-Path $media "reef_octopus.ogv")),
+    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Octa1000.webm", (Join-Path $media "suckers_octopus.webm")),
+    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Sealife-Munich-Octopus.ogv", (Join-Path $media "sealife_octopus.ogv"))
 )
 
 foreach ($item in $downloads) {
@@ -30,4 +32,3 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
 }
 
 Write-Host "Medios y narración preparados. Ejecuta scripts\render_octopus_short.ps1."
-
