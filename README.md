@@ -8,7 +8,7 @@ Aplicación local para gestionar nichos, priorizar ideas, producir Shorts y desc
 2. Haz doble clic en `INICIAR.bat`.
 3. El estudio se abre en `http://localhost:8501`.
 
-La interfaz incluye **Estudio**, **Ideas**, **Producción**, **Nichos** y **Entregables**. La vista inicial muestra toda la cartera y permite cambiar de temática sin salir del flujo de trabajo. Incluye cinco identidades editoriales de partida:
+La interfaz está organizada por **proyectos/canales**. Cada proyecto tiene su propio panel con **Resumen**, **Ideas de vídeos**, **Generar vídeo**, **Entregables** e **Identidad**. La cartera permite cambiar de temática sin mezclar sus ideas, producciones ni metadatos. Incluye cinco proyectos editoriales de partida:
 
 - `Mentes Salvajes`;
 - `Historia Oculta`;
@@ -16,7 +16,7 @@ La interfaz incluye **Estudio**, **Ideas**, **Producción**, **Nichos** y **Entr
 - `Ciencia Invisible`;
 - `Futuro Real`.
 
-Cada idea aplica automáticamente el tono, color, política visual, CTA y metadatos de su nicho. El vídeo del pulpo dispone ya de render completo; el resto queda bloqueado antes del render hasta incorporar metraje real y fuentes verificadas.
+Cada tarjeta representa una idea concreta de vídeo y abre directamente su generador. El panel aplica automáticamente el tono, color, política visual, CTA y metadatos del proyecto. El vídeo del pulpo dispone ya de generación final completa desde el panel. Las demás ideas permiten preparar la producción y cargar metraje real aprobado; el montaje final permanece bloqueado hasta disponer de material suficiente y validado.
 
 Cada proyecto genera:
 
