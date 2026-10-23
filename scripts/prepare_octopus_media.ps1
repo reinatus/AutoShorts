@@ -5,9 +5,8 @@ $generated = Join-Path $media "generated"
 New-Item -ItemType Directory -Force $media, $generated | Out-Null
 
 $downloads = @(
-    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Giant%20Pacific%20Octopus%20in%20Washington.webm", (Join-Path $media "giant_pacific_octopus.webm")),
-    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Hairy%20octopus.webm", (Join-Path $media "hairy_octopus.webm")),
-    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Wk215-deep-sea-octopuses.webm", (Join-Path $media "octopus_garden.webm"))
+    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Octopus%20Vulgaris%20-%20Poulpe%20commun.webm", (Join-Path $media "common_octopus.webm")),
+    @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Octopus.ogv", (Join-Path $media "reef_octopus.ogv"))
 )
 
 foreach ($item in $downloads) {
