@@ -1,8 +1,7 @@
 # Créditos del Short sobre el pulpo
 
-- *Giant Pacific Octopus in Washington*, John, CC BY 3.0. https://commons.wikimedia.org/wiki/File:Giant_Pacific_Octopus_in_Washington.webm
-- *Hairy octopus*, Roser Gari Perez, CC BY 4.0. https://commons.wikimedia.org/wiki/File:Hairy_octopus.webm
-- *Wk215-deep-sea-octopuses*, NOAA, dominio público. https://commons.wikimedia.org/wiki/File:Wk215-deep-sea-octopuses.webm
+- *Octopus Vulgaris - Poulpe commun*, Ericsfr, CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Octopus_Vulgaris_-_Poulpe_commun.webm
+- *Octopus*, Silke Baron (prilfish), CC BY 2.0. https://commons.wikimedia.org/wiki/File:Octopus.ogv
 - Narración sintetizada localmente con Piper (`es_ES-sharvard-medium`), sin API de pago.
 
 Fuentes científicas de contraste:
