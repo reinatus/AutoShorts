@@ -9,6 +9,7 @@ real_media/*.webm
 real_media/stills/*.jpg
 real_media/generated/*.wav
 real_media/**/*.webm
+real_media/**/*.ogv
 real_media/**/generated/*.wav
 .verification/
 .voice-venv/
@@ -19,4 +20,3 @@ __pycache__/
 .streamlit/secrets.toml
 output/
 tasks/
-
