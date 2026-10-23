@@ -1,5 +1,7 @@
 param(
-    [string]$Output = "..\..\outputs\AutoShorts-Pulpo-neuronas-FINAL.mp4"
+    [string]$Output = "..\..\outputs\AutoShorts-Pulpo-neuronas-FINAL.mp4",
+    [ValidateRange(0,3)]
+    [int]$CtaVariant = 0
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,6 +12,17 @@ if (-not $ffmpeg) { throw "FFmpeg no encontrado" }
 $media = Join-Path $root "real_media\octopus"
 $temp = Join-Path $root ".tmp\octopus-short"
 New-Item -ItemType Directory -Force $temp | Out-Null
+
+# Rota la llamada final entre Shorts sin cambiar el montaje ni los subtitulos a mano.
+$ctaVariants = @(
+    "¿TÚ QUÉ PIENSAS?\NDEJA TU COMENTARIO ↓",
+    "¿TE HA SORPRENDIDO?\NCUÉNTAME POR QUÉ ↓",
+    "¿LO SABÍAS?\NTE LEO EN COMENTARIOS ↓",
+    "¿QUÉ HARÍAS TÚ?\NDEJA TU RESPUESTA ↓"
+)
+$subtitleTemplate = Get-Content -Raw (Join-Path $media "subtitles.ass")
+$renderSubtitles = Join-Path $temp "subtitles_render.ass"
+$subtitleTemplate.Replace("{{CTA_FINAL}}", $ctaVariants[$CtaVariant]) | Set-Content -Encoding utf8 $renderSubtitles
 
 $segments = @(
     # Macro real de brazos y ventosas desde el primer fotograma.
@@ -50,7 +63,7 @@ for ($i=1; $i -le 10; $i++) {
     $videoInputs += @("-i", (Join-Path $temp ("{0:D2}.mp4" -f $i)))
 }
 $videoTags = (0..9 | ForEach-Object { "[$($_):v]" }) -join ""
-$subs = (Join-Path $media "subtitles.ass").Replace('\','/').Replace(':','\:')
+$subs = $renderSubtitles.Replace('\','/').Replace(':','\:')
 $filter = $videoTags + "concat=n=10:v=1:a=0,trim=duration=39.85,setpts=PTS-STARTPTS,ass='$subs'[v]"
 $outputPath = [System.IO.Path]::GetFullPath((Join-Path $root $Output))
 New-Item -ItemType Directory -Force (Split-Path -Parent $outputPath) | Out-Null
