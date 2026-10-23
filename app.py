@@ -16,6 +16,7 @@ from autoshorts.studio import (
     ensure_library,
     list_projects,
     render_octopus,
+    render_uploaded_short,
     slugify,
 )
 
@@ -225,14 +226,24 @@ elif view == "generate":
         ready = len(uploaded) >= 3
         if uploaded:
             st.caption(f"{len(uploaded)} clips añadidos. Se requieren al menos 3 planos diferentes.")
-        if st.button("Crear producción con este material", type="primary", use_container_width=True, disabled=blocked_budget or not ready):
+        rights_ok = st.checkbox("Confirmo que puedo utilizar estos clips y que corresponden al tema del vídeo.", key=f"rights-{idea.slug}")
+        if st.button("▶  GENERAR VÍDEO CON ESTOS CLIPS", type="primary", use_container_width=True, disabled=blocked_budget or not ready or not rights_ok):
             project = create_project(LIBRARY, idea, niche, script, cta_index)
             media = project / "media"
             media.mkdir(exist_ok=True)
+            clip_paths = []
             for index, clip in enumerate(uploaded, 1):
-                (media / f"{index:02d}-{Path(clip.name).name}").write_bytes(clip.getvalue())
+                clip_path = media / f"{index:02d}-{Path(clip.name).name}"
+                clip_path.write_bytes(clip.getvalue())
+                clip_paths.append(clip_path)
+            with st.spinner("Generando narración, subtítulos, montaje y portada en local…"):
+                video = render_uploaded_short(ROOT, project, clip_paths, script, niche.cta_variants[cta_index])
+                cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
             st.session_state["last_project"] = str(project)
-            st.success("Producción creada con los clips reales. El montaje automático se habilitará tras validar orden, derechos y narración.")
+            st.success("Vídeo final, narración, subtítulos, cierre, portada y textos terminados.")
+            st.video(str(video))
+            st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4", key=f"download-uploaded-{project.name}")
+            st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg", key=f"download-cover-{project.name}")
 
 elif view == "outputs":
     st.markdown('<h2 class="section-title">Entregables</h2>', unsafe_allow_html=True)
