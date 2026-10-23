@@ -1,4 +1,24 @@
-# AutoShorts
+# AutoShorts Studio
+
+Aplicación local para gestionar nichos, priorizar ideas, producir Shorts y descargar el paquete completo de publicación.
+
+## Abrir el estudio
+
+1. Haz doble clic en `INSTALAR.bat` la primera vez.
+2. Haz doble clic en `INICIAR.bat`.
+3. El estudio se abre en `http://localhost:8501`.
+
+La interfaz incluye **Resumen**, **Banco de ideas**, **Crear vídeo**, **Nichos** y **Entregables**. El primer nicho es `Mentes Salvajes`, con 12 ideas editoriales. El vídeo del pulpo dispone ya de render completo; el resto queda bloqueado antes del render hasta incorporar metraje real y fuentes verificadas.
+
+Cada proyecto genera:
+
+- guion y configuración editorial;
+- título, descripción, hashtags, palabras clave y CTA;
+- lista de comprobaciones para publicar;
+- MP4 y portada vertical cuando su renderizador está disponible;
+- presupuesto previsto y bloqueo si supera el límite indicado.
+
+La portada de Shorts se genera a 2160×3840. Su disponibilidad de subida depende de las funciones habilitadas en la cuenta y en YouTube Studio.
 
 Fábrica de vídeos verticales 9:16 construida sobre MoneyPrinterTurbo.
 
