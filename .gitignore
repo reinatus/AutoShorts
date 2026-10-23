@@ -20,3 +20,4 @@ __pycache__/
 .streamlit/secrets.toml
 output/
 tasks/
+studio_data/
