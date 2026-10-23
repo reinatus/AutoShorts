@@ -2,6 +2,8 @@
 
 - *Octopus Vulgaris - Poulpe commun*, Ericsfr, CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Octopus_Vulgaris_-_Poulpe_commun.webm
 - *Octopus*, Silke Baron (prilfish), CC BY 2.0. https://commons.wikimedia.org/wiki/File:Octopus.ogv
+- *Octa1000*, Jon Houseman, CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Octa1000.webm
+- *Sealife-Munich-Octopus*, MartinThoma, CC0. https://commons.wikimedia.org/wiki/File:Sealife-Munich-Octopus.ogv
 - Narración sintetizada localmente con Piper (`es_ES-sharvard-medium`), sin API de pago.
 
 Fuentes científicas de contraste:
@@ -11,4 +13,3 @@ Fuentes científicas de contraste:
 - Styfhals et al. (2024), *Evolution of cephalopod nervous systems*: https://pmc.ncbi.nlm.nih.gov/articles/PMC10792511/
 
 Cambios: selección, recorte vertical, montaje, color, narración y subtítulos en español.
-
