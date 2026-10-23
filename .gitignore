@@ -4,10 +4,17 @@
 .cache/
 godot_pilot/.godot/
 godot_pilot/output/
+godot_pilot/audio/*.wav
+real_media/*.webm
+real_media/stills/*.jpg
+real_media/generated/*.wav
 .verification/
+.voice-venv/
+.tmp/
 venv/
 __pycache__/
 *.pyc
 .streamlit/secrets.toml
 output/
 tasks/
+
