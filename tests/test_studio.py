@@ -2,7 +2,7 @@ from pathlib import Path
 
 import json
 
-from autoshorts.studio import DEFAULT_IDEAS, DEFAULT_NICHE, create_project, ensure_library, publication_package
+from autoshorts.studio import DEFAULT_IDEAS, DEFAULT_NICHE, _ass_subtitles, create_project, ensure_library, publication_package, render_uploaded_short
 
 
 def test_default_library_has_expandable_niche_and_ideas(tmp_path: Path):
@@ -39,3 +39,19 @@ def test_project_contains_budget_and_upload_text(tmp_path: Path):
     project = create_project(tmp_path, DEFAULT_IDEAS[0], DEFAULT_NICHE, "Guion de prueba", 0)
     assert (project / "project.json").exists()
     assert (project / "publicacion.txt").read_text(encoding="utf-8").startswith("TÍTULO")
+
+
+def test_uploaded_renderer_requires_visual_variety(tmp_path: Path):
+    try:
+        render_uploaded_short(tmp_path, tmp_path, [tmp_path / "one.mp4"], "Guion", "Comenta")
+    except ValueError as error:
+        assert "tres clips" in str(error)
+    else:
+        raise AssertionError("El render debe impedir montajes con un solo clip.")
+
+
+def test_subtitles_include_body_and_final_cta():
+    subtitles = _ass_subtitles("Una explicación breve que se reparte en subtítulos legibles.", "¿Qué piensas?")
+    assert "Style: Body" in subtitles
+    assert "0:00:36.50,0:00:40.00,CTA" in subtitles
+    assert "¿Qué piensas?" in subtitles
