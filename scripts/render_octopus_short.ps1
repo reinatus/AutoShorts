@@ -12,16 +12,16 @@ $temp = Join-Path $root ".tmp\octopus-short"
 New-Item -ItemType Directory -Force $temp | Out-Null
 
 $segments = @(
-    @{ Name="01"; Source="hairy_octopus.webm";         Start=0.0;  Duration=4.0; X="950" },
-    @{ Name="02"; Source="octopus_garden.webm";        Start=42.0; Duration=4.0; X="1700" },
-    @{ Name="03"; Source="giant_pacific_octopus.webm"; Start=8.0;  Duration=4.0; X="2000" },
-    @{ Name="04"; Source="octopus_garden.webm";        Start=46.0; Duration=4.0; X="1700" },
-    @{ Name="05"; Source="hairy_octopus.webm";         Start=4.0;  Duration=4.0; X="950" },
-    @{ Name="06"; Source="giant_pacific_octopus.webm"; Start=18.0; Duration=4.0; X="2000" },
-    @{ Name="07"; Source="octopus_garden.webm";        Start=50.0; Duration=4.0; X="1700" },
-    @{ Name="08"; Source="hairy_octopus.webm";         Start=8.0;  Duration=4.0; X="950" },
-    @{ Name="09"; Source="giant_pacific_octopus.webm"; Start=28.0; Duration=4.0; X="2000" },
-    @{ Name="10"; Source="octopus_garden.webm";        Start=54.0; Duration=4.0; X="1700" }
+    @{ Name="01"; Source="common_octopus.webm"; Start=0.0;  Duration=4.0; X="1100" },
+    @{ Name="02"; Source="reef_octopus.ogv";    Start=0.0;  Duration=4.0; X="750" },
+    @{ Name="03"; Source="common_octopus.webm"; Start=10.0; Duration=4.0; X="1100" },
+    @{ Name="04"; Source="reef_octopus.ogv";    Start=20.0; Duration=4.0; X="750" },
+    @{ Name="05"; Source="common_octopus.webm"; Start=4.0;  Duration=4.0; X="1100" },
+    @{ Name="06"; Source="reef_octopus.ogv";    Start=28.0; Duration=4.0; X="750" },
+    @{ Name="07"; Source="common_octopus.webm"; Start=20.0; Duration=4.0; X="1100" },
+    @{ Name="08"; Source="common_octopus.webm"; Start=32.0; Duration=4.0; X="1100" },
+    @{ Name="09"; Source="reef_octopus.ogv";    Start=40.0; Duration=4.0; X="750" },
+    @{ Name="10"; Source="reef_octopus.ogv";    Start=48.0; Duration=4.0; X="750" }
 )
 
 foreach ($segment in $segments) {
