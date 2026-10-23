@@ -25,249 +25,249 @@ LIBRARY = ROOT / "studio_data"
 niches, ideas = ensure_library(LIBRARY)
 niche_by_slug = {item.slug: item for item in niches}
 
-st.set_page_config(page_title="AutoShorts Studio", page_icon="⚡", layout="wide")
+
+def project_ideas(slug: str) -> list[VideoIdea]:
+    return sorted((item for item in ideas if item.niche_slug == slug), key=lambda item: item.viral_score, reverse=True)
+
+
+def open_project(slug: str) -> None:
+    st.session_state["project_slug"] = slug
+    st.session_state["project_view"] = "videos"
+
+
+def open_portfolio() -> None:
+    st.session_state["project_slug"] = "portfolio"
+
+
+def set_view(view: str) -> None:
+    st.session_state["project_view"] = view
+
+
+def open_generator(idea: VideoIdea) -> None:
+    st.session_state["project_slug"] = idea.niche_slug
+    st.session_state["selected_idea"] = idea.slug
+    st.session_state["project_view"] = "generate"
+
+
+st.set_page_config(page_title="AutoShorts", page_icon="▶", layout="wide", initial_sidebar_state="collapsed")
 st.markdown(
     """
 <style>
-:root{--ink:#F6F8FB;--muted:#91A1AF;--line:#243442;--panel:#0C1822;--yellow:#FFD447}
-.stApp{background:radial-gradient(circle at 80% -20%,#183147 0,transparent 34%),#061019;color:var(--ink)}
-[data-testid="stSidebar"]{background:#08141E;border-right:1px solid var(--line)}
-[data-testid="stSidebar"] .block-container{padding-top:1.5rem}
-.block-container{padding-top:2rem;max-width:1500px}
-.brand{font-size:.76rem;letter-spacing:.18em;color:#8394A2;font-weight:800}.brand strong{color:#FFD447}
-.hero{position:relative;overflow:hidden;padding:2rem 2.2rem;border:1px solid #2C3E4D;border-radius:24px;background:linear-gradient(125deg,#0D1F2D 0%,#0B1721 60%,#132735 100%);margin-bottom:1.1rem;box-shadow:0 22px 70px #0005}
-.hero:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-90px;top:-120px;background:var(--hero-accent,#FFD447);filter:blur(70px);opacity:.18}
-.eyebrow{color:var(--hero-accent,#FFD447);font-weight:900;letter-spacing:.15em;font-size:.74rem}
-.hero h1{margin:.35rem 0 .45rem;font-size:clamp(2rem,4vw,3.4rem);line-height:1.02;max-width:820px}.hero p{color:#B8C4CD;font-size:1.04rem;margin:0;max-width:820px}
-.status{display:inline-flex;align-items:center;gap:.45rem;margin-top:1rem;color:#DCE5EB;font-size:.82rem}.dot{width:8px;height:8px;border-radius:50%;background:#55D68A;box-shadow:0 0 14px #55D68A}
-.niche-card{min-height:205px;padding:1.15rem 1.25rem;border-radius:18px;background:linear-gradient(145deg,#0E1B26,#09131C);border:1px solid #263746;border-top:4px solid var(--accent);margin-bottom:.55rem}
-.niche-kicker{color:var(--accent);font-weight:900;font-size:.7rem;letter-spacing:.13em}.niche-card h3{font-size:1.32rem;margin:.45rem 0}.niche-card p{color:#A9B6C0;min-height:48px}.niche-meta{color:#6F8291;font-size:.78rem;border-top:1px solid #20303C;padding-top:.7rem;margin-top:.7rem}
-.idea-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}.score{display:inline-block;background:#FFD447;color:#101820;border-radius:999px;padding:.16rem .56rem;font-weight:900;font-size:.78rem}.niche-pill{display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:.14rem .52rem;font-weight:700;font-size:.72rem}
-div[data-testid="stMetric"]{background:linear-gradient(145deg,#0D1B26,#0A151E);border:1px solid #263746;padding:1rem 1.1rem;border-radius:16px}
-div[data-testid="stMetricValue"]{color:#F8FAFC}
-[data-baseweb="tab-list"]{gap:.4rem;border-bottom:1px solid #21313E}[data-baseweb="tab"]{color:#A9B6C0;background:#0A151E;border-radius:11px 11px 0 0;padding:.7rem 1.1rem}[aria-selected="true"][data-baseweb="tab"]{color:#FFD447;background:#101F2B}
-.stButton>button{border-radius:11px;border-color:#314554}.stButton>button[kind="primary"]{background:#FFD447;color:#0A1117;border-color:#FFD447;font-weight:900}
-small,.muted{color:#91A1AF}.section-copy{color:#9DABB6;margin-top:-.55rem;margin-bottom:1rem}
-@media(max-width:700px){.hero{padding:1.4rem}.hero h1{font-size:2rem}.block-container{padding-left:1rem;padding-right:1rem}}
+:root{--bg:#0B0D10;--surface:#12151A;--surface2:#171B21;--line:#282E37;--text:#F5F6F7;--muted:#939BA7;--accent:#F4E35D}
+.stApp{background:var(--bg);color:var(--text)}
+.block-container{max-width:1480px;padding-top:1.55rem;padding-bottom:4rem}
+[data-testid="stSidebar"]{background:#0F1216;border-right:1px solid #242932}
+[data-testid="stSidebar"] .block-container{padding-top:1.35rem}
+.logo{font-size:1.08rem;font-weight:950;letter-spacing:-.03em}.logo b{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:8px;background:#F4E35D;color:#111;margin-right:.45rem}.sidebar-label{font-size:.67rem;font-weight:850;letter-spacing:.16em;color:#737C88;margin:1.6rem 0 .6rem}
+.project-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;border-bottom:1px solid var(--line);padding:.4rem 0 1.35rem;margin-bottom:1.1rem}.breadcrumb{font-size:.72rem;color:#7F8995;letter-spacing:.1em;text-transform:uppercase;font-weight:800}.project-head h1{font-size:clamp(2rem,4vw,3.15rem);letter-spacing:-.055em;margin:.35rem 0 .4rem;line-height:1}.project-head p{color:#A5ADB7;margin:0;max-width:760px}.project-mark{width:64px;height:64px;border-radius:18px;background:var(--project-color);box-shadow:0 0 50px color-mix(in srgb,var(--project-color) 30%,transparent)}
+.nav-strip{display:flex;gap:.5rem;margin-bottom:1.5rem}.nav-label{font-size:.78rem;font-weight:800;color:#98A1AC}
+.section-title{font-size:1.55rem;letter-spacing:-.035em;margin:0}.section-sub{color:#8F98A3;margin:.35rem 0 1.2rem}
+.video-card{position:relative;min-height:285px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#15191F,#111419);padding:1.15rem 1.2rem;margin-bottom:.65rem;overflow:hidden}.video-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--project-color)}.video-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem}.number{font:800 .72rem/1 monospace;color:#707A86}.score{font-size:.72rem;font-weight:850;background:#20262D;border:1px solid #343C46;padding:.28rem .5rem;border-radius:999px}.video-card h3{font-size:1.22rem;letter-spacing:-.025em;margin:.9rem 0 .55rem}.hook{color:#F3F4F5;font-size:.95rem;line-height:1.42;margin:.6rem 0}.visual{font-size:.82rem;color:#89939F;border-top:1px solid #252B33;margin-top:.8rem;padding-top:.75rem}.meta{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}.tag{font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;color:#929BA6;border:1px solid #303741;border-radius:5px;padding:.23rem .38rem}
+.brief{border:1px solid var(--line);border-left:4px solid var(--project-color);background:#12161B;border-radius:12px;padding:1rem 1.15rem;margin:.7rem 0 1rem}.brief-kicker{font-size:.67rem;letter-spacing:.12em;font-weight:900;color:var(--project-color)}.brief h3{margin:.35rem 0}.brief p{color:#9EA7B1;margin:.2rem 0}
+.portfolio-card{min-height:220px;border:1px solid var(--line);border-top:4px solid var(--project-color);border-radius:17px;background:#12161B;padding:1.2rem;margin-bottom:.6rem}.portfolio-card small{color:var(--project-color);font-weight:900;letter-spacing:.12em}.portfolio-card h3{font-size:1.35rem;margin:.55rem 0}.portfolio-card p{color:#929CA7;min-height:52px}.portfolio-meta{font-size:.78rem;color:#737D89;border-top:1px solid #262C34;padding-top:.7rem}
+.status-ready{color:#6DE2A3}.status-blocked{color:#FFB96A}.empty{border:1px dashed #303741;border-radius:14px;padding:2rem;text-align:center;color:#89939F}
+div[data-testid="stMetric"]{background:#12161B;border:1px solid #292F38;border-radius:14px;padding:.9rem 1rem}div[data-testid="stMetricValue"]{font-size:1.75rem}
+.stButton>button{border-radius:9px;border:1px solid #343B45;background:#171B21;color:#E9EBEE;font-weight:750}.stButton>button:hover{border-color:#F4E35D;color:#F4E35D}.stButton>button[kind="primary"]{background:#F4E35D;color:#111;border-color:#F4E35D;font-weight:900}
+[data-testid="stSidebar"] .stButton>button{justify-content:flex-start;background:transparent;border-color:transparent;color:#A7AFB9;padding-left:.35rem}[data-testid="stSidebar"] .stButton>button:hover{background:#191E24;border-color:#2B323B;color:#FFF}
+.danger-note{font-size:.78rem;color:#858E99}.stTextArea textarea,.stTextInput input{background:#11151A;border-color:#303741}
+@media(max-width:760px){.project-mark{display:none}.project-head h1{font-size:2.05rem}.block-container{padding-left:1rem;padding-right:1rem}.video-card{min-height:auto}}
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-
-def ideas_for(niche_slug: str | None) -> list[VideoIdea]:
-    return [item for item in ideas if niche_slug is None or item.niche_slug == niche_slug]
-
-
-def select_niche(slug: str) -> None:
-    st.session_state["portfolio_filter"] = slug
-
-
-def prepare_idea(idea: VideoIdea) -> None:
-    st.session_state["selected_idea"] = idea.slug
-    st.session_state["portfolio_filter"] = idea.niche_slug
-
+st.session_state.setdefault("project_slug", niches[0].slug)
+st.session_state.setdefault("project_view", "videos")
+selected_project = st.session_state["project_slug"]
 
 with st.sidebar:
-    st.markdown('<div class="brand"><strong>⚡ AUTOSHORTS</strong> / CONTROL ROOM</div>', unsafe_allow_html=True)
-    st.markdown("### Cartera editorial")
-    filter_options = ["all", *niche_by_slug]
-    filter_names = {"all": "Todos los nichos", **{slug: niche.name for slug, niche in niche_by_slug.items()}}
-    current_filter = st.session_state.get("portfolio_filter", "all")
-    if current_filter not in filter_options:
-        current_filter = "all"
-    st.session_state.setdefault("portfolio_filter", current_filter)
-    portfolio_filter = st.selectbox(
-        "Vista",
-        filter_options,
-        format_func=filter_names.get,
-        key="portfolio_filter",
-    )
-    scope_niche = niche_by_slug.get(portfolio_filter)
-    if scope_niche:
-        st.caption(scope_niche.promise)
-        st.markdown(f'<div style="height:4px;border-radius:9px;background:{scope_niche.primary_color};margin:.8rem 0"></div>', unsafe_allow_html=True)
-        st.button("← Ver toda la cartera", use_container_width=True, on_click=select_niche, args=("all",))
-    else:
-        st.caption("Cambia de temática sin salir del mismo flujo de trabajo.")
-        st.markdown('<div style="height:4px;border-radius:9px;background:linear-gradient(90deg,#FFD447,#FF7A59,#31D7C8,#62A8FF,#B38CFF);margin:.8rem 0"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="logo"><b>▶</b> AutoShorts</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-label">PROYECTOS</div>', unsafe_allow_html=True)
+    st.button("▦  Todos los proyectos", use_container_width=True, on_click=open_portfolio)
+    for niche in niches:
+        marker = "●" if niche.slug == selected_project else "○"
+        st.button(f"{marker}  {niche.name}", key=f"side-{niche.slug}", use_container_width=True, on_click=open_project, args=(niche.slug,))
     st.divider()
-    max_cost = st.number_input("Tope por Short (USD)", 0.0, 5.0, 0.50, 0.05)
-    st.caption("Los servicios de pago están desactivados. Crear un proyecto no genera cargos.")
-    st.divider()
-    st.caption(f"{len(niches)} nichos · {len(ideas)} ideas · producción local")
+    with st.expander("＋ Nuevo proyecto"):
+        with st.form("new-project"):
+            name = st.text_input("Nombre del proyecto")
+            promise = st.text_input("Qué promete al espectador")
+            audience = st.text_input("Audiencia")
+            tone = st.text_input("Tono")
+            color = st.color_picker("Color", "#F4E35D")
+            if st.form_submit_button("Crear proyecto"):
+                new_slug = slugify(name)
+                add_niche(LIBRARY, Niche(new_slug, name, promise, audience, tone, color, "#0B0D10", "Vídeo real y específico para cada frase.", "Gancho visual y verbal en los dos primeros segundos.", ["¿Tú qué piensas? Déjalo en comentarios ↓"]))
+                st.session_state["project_slug"] = new_slug
+                st.session_state["project_view"] = "videos"
+                st.rerun()
+    st.markdown('<div class="sidebar-label">CONTROL</div>', unsafe_allow_html=True)
+    max_cost = st.number_input("Tope por vídeo (USD)", 0.0, 5.0, 0.50, 0.05)
+    st.markdown('<p class="danger-note">No se ejecutan proveedores de pago sin autorización.</p>', unsafe_allow_html=True)
 
-scoped_ideas = ideas_for(scope_niche.slug if scope_niche else None)
-hero_accent = scope_niche.primary_color if scope_niche else "#FFD447"
-hero_title = scope_niche.name if scope_niche else "Tu cartera de canales, una sola fábrica"
-hero_copy = scope_niche.promise if scope_niche else "Explora nichos, prioriza ideas y lleva cada vídeo desde el gancho hasta el paquete de publicación."
+if selected_project == "portfolio" or selected_project not in niche_by_slug:
+    st.markdown('<div class="breadcrumb">AutoShorts / Proyectos</div>', unsafe_allow_html=True)
+    st.title("Tus proyectos")
+    st.markdown('<p class="section-sub">Cada proyecto es un canal independiente con sus propias ideas, identidad, producción y entregables.</p>', unsafe_allow_html=True)
+    for start in range(0, len(niches), 3):
+        cols = st.columns(3)
+        for col, niche in zip(cols, niches[start:start + 3]):
+            niche_ideas = project_ideas(niche.slug)
+            completed = sum(1 for folder in list_projects(LIBRARY) if json.loads((folder / "project.json").read_text(encoding="utf-8")).get("niche", {}).get("slug") == niche.slug)
+            with col:
+                st.markdown(
+                    f'<div class="portfolio-card" style="--project-color:{niche.primary_color}"><small>PROYECTO</small><h3>{html.escape(niche.name)}</h3><p>{html.escape(niche.promise)}</p><div class="portfolio-meta">{len(niche_ideas)} ideas de vídeo · {completed} producciones</div></div>',
+                    unsafe_allow_html=True,
+                )
+                st.button("Abrir panel", key=f"portfolio-{niche.slug}", use_container_width=True, on_click=open_project, args=(niche.slug,))
+    st.stop()
+
+niche = niche_by_slug[selected_project]
+niche_ideas = project_ideas(niche.slug)
 st.markdown(
-    f'<div class="hero" style="--hero-accent:{hero_accent}"><div class="eyebrow">ESTUDIO MULTINICHO · LOCAL</div><h1>{html.escape(hero_title)}</h1><p>{html.escape(hero_copy)}</p><div class="status"><span class="dot"></span> Sin APIs de pago activas</div></div>',
+    f'<div class="project-head" style="--project-color:{niche.primary_color}"><div><div class="breadcrumb">Proyectos / {html.escape(niche.name)}</div><h1>{html.escape(niche.name)}</h1><p>{html.escape(niche.promise)}</p></div><div class="project-mark"></div></div>',
     unsafe_allow_html=True,
 )
 
-tab_studio, tab_ideas, tab_create, tab_niches, tab_outputs = st.tabs(["Estudio", "Ideas", "Producción", "Nichos", "Entregables"])
+views = [("overview", "Resumen"), ("videos", "Ideas de vídeos"), ("generate", "Generar vídeo"), ("outputs", "Entregables"), ("identity", "Identidad")]
+nav_cols = st.columns(len(views))
+for col, (view_key, view_label) in zip(nav_cols, views):
+    col.button(view_label, key=f"nav-{view_key}", type="primary" if st.session_state["project_view"] == view_key else "secondary", use_container_width=True, on_click=set_view, args=(view_key,))
 
-with tab_studio:
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Nichos activos", len(niches) if not scope_niche else 1)
-    c2.metric("Ideas en cartera", len(scoped_ideas))
-    c3.metric("Render directo", sum(item.renderer != "pending" for item in scoped_ideas))
-    c4.metric("Tope USD", f"${max_cost:.2f}")
-    st.subheader("Mapa de contenidos" if not scope_niche else "Dirección editorial")
-    st.markdown('<p class="section-copy">Cada nicho mantiene su propia voz, color, gancho y política visual.</p>', unsafe_allow_html=True)
-    visible_niches = niches if not scope_niche else [scope_niche]
-    for row_start in range(0, len(visible_niches), 3):
-        columns = st.columns(3)
-        for column, niche in zip(columns, visible_niches[row_start:row_start + 3]):
-            niche_ideas = ideas_for(niche.slug)
-            top = max(niche_ideas, key=lambda item: item.viral_score) if niche_ideas else None
-            with column:
+view = st.session_state["project_view"]
+
+if view == "overview":
+    project_folders = [folder for folder in list_projects(LIBRARY) if json.loads((folder / "project.json").read_text(encoding="utf-8")).get("niche", {}).get("slug") == niche.slug]
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Ideas de vídeos", len(niche_ideas))
+    m2.metric("Producciones", len(project_folders))
+    m3.metric("Render directo", sum(item.renderer != "pending" for item in niche_ideas))
+    m4.metric("Tope", f"${max_cost:.2f}")
+    st.markdown("### Próximos vídeos")
+    for idea in niche_ideas[:3]:
+        left, right = st.columns([5, 1])
+        left.write(f"**{idea.title}**  \n{idea.hook}")
+        right.button("Generar", key=f"quick-{idea.slug}", use_container_width=True, on_click=open_generator, args=(idea,))
+        st.divider()
+
+elif view == "videos":
+    st.markdown('<h2 class="section-title">Ideas de vídeos</h2>', unsafe_allow_html=True)
+    st.markdown(f'<p class="section-sub">{len(niche_ideas)} vídeos concretos para {html.escape(niche.name)}. Pulsa Generar para llevar una idea directamente a producción.</p>', unsafe_allow_html=True)
+    search_col, difficulty_col = st.columns([3, 1])
+    query = search_col.text_input("Buscar vídeo", placeholder="Busca por título, gancho o tema…", key=f"search-{niche.slug}")
+    difficulty = difficulty_col.selectbox("Dificultad", ["todas", "baja", "media", "alta"], key=f"difficulty-{niche.slug}")
+    filtered = [item for item in niche_ideas if (difficulty == "todas" or item.visual_difficulty == difficulty) and (not query or query.lower() in f"{item.title} {item.hook} {item.angle}".lower())]
+    for start in range(0, len(filtered), 2):
+        cols = st.columns(2)
+        for col, idea in zip(cols, filtered[start:start + 2]):
+            render_state = "Render completo disponible" if idea.renderer != "pending" else "Requiere metraje real"
+            with col:
                 st.markdown(
-                    f'<div class="niche-card" style="--accent:{niche.primary_color}"><div class="niche-kicker">CANAL · {len(niche_ideas)} IDEAS</div><h3>{html.escape(niche.name)}</h3><p>{html.escape(niche.promise)}</p><div class="niche-meta">Mejor oportunidad · {html.escape(top.title) if top else "Sin ideas todavía"}</div></div>',
+                    f'<div class="video-card" style="--project-color:{niche.primary_color}"><div class="video-top"><span class="number">VIDEO {niche_ideas.index(idea)+1:02d}</span><span class="score">{idea.viral_score}/100</span></div><h3>{html.escape(idea.title)}</h3><div class="hook">“{html.escape(idea.hook)}”</div><div class="visual"><b>APERTURA:</b> {html.escape(idea.visual_hook)}</div><div class="meta"><span class="tag">{idea.visual_difficulty}</span><span class="tag">${idea.estimated_cost_usd:.2f}</span><span class="tag">{render_state}</span></div></div>',
                     unsafe_allow_html=True,
                 )
-                st.button("Abrir nicho →", key=f"open-{niche.slug}", use_container_width=True, on_click=select_niche, args=(niche.slug,))
-    if scope_niche:
-        left, right = st.columns(2)
-        left.info(f"Gancho: {scope_niche.hook_formula}")
-        right.info(f"Visuales: {scope_niche.visual_policy}")
-
-with tab_ideas:
-    st.subheader("Banco de ideas")
-    st.markdown('<p class="section-copy">Compara oportunidades entre temáticas o trabaja solo dentro del nicho seleccionado.</p>', unsafe_allow_html=True)
-    f1, f2, f3 = st.columns([2, 1, 1])
-    query = f1.text_input("Buscar", placeholder="historia, animales, tecnología…")
-    niche_choices = ["all", *niche_by_slug]
-    ideas_niche = f2.selectbox(
-        "Nicho",
-        niche_choices,
-        index=niche_choices.index(scope_niche.slug) if scope_niche else 0,
-        format_func=filter_names.get,
-        key="ideas_niche_filter",
-    )
-    difficulty = f3.multiselect("Dificultad", ["baja", "media", "alta"], default=["baja", "media", "alta"])
-    filtered = [
-        item for item in ideas
-        if (ideas_niche == "all" or item.niche_slug == ideas_niche)
-        and item.visual_difficulty in difficulty
-        and (not query or query.lower() in f"{item.title} {item.angle} {niche_by_slug[item.niche_slug].name}".lower())
-    ]
-    for idea in sorted(filtered, key=lambda item: item.viral_score, reverse=True):
-        niche = niche_by_slug[idea.niche_slug]
-        with st.container(border=True):
-            col, action = st.columns([5, 1])
-            col.markdown(
-                f'<div class="idea-head" style="--accent:{niche.primary_color}"><span class="score">{idea.viral_score}/100</span><span class="niche-pill">{html.escape(niche.name)}</span><strong>{html.escape(idea.title)}</strong></div>',
-                unsafe_allow_html=True,
-            )
-            col.caption(idea.angle)
-            col.write(f"**Gancho:** {idea.hook}")
-            col.write(f"**Primer plano:** {idea.visual_hook}")
-            col.caption(f"Dificultad {idea.visual_difficulty} · coste previsto ${idea.estimated_cost_usd:.2f} · {idea.status}")
-            action.button("Producir", key=f"use-{idea.slug}", use_container_width=True, on_click=prepare_idea, args=(idea,))
-    with st.expander("Añadir una idea"):
-        with st.form("new-idea"):
-            idea_niche_slug = st.selectbox("Nicho", list(niche_by_slug), format_func=lambda slug: niche_by_slug[slug].name)
-            title = st.text_input("Título de trabajo")
-            angle = st.text_area("Ángulo")
-            hook = st.text_input("Gancho")
-            visual = st.text_input("Primer plano imprescindible")
-            score = st.slider("Puntuación editorial", 1, 100, 75)
-            if st.form_submit_button("Guardar idea"):
-                add_idea(LIBRARY, VideoIdea(slugify(title), idea_niche_slug, title, angle, hook, visual, score, "media", 0.0))
-                st.success("Idea guardada.")
+                st.button("Generar este vídeo →", key=f"generate-{idea.slug}", type="primary", use_container_width=True, on_click=open_generator, args=(idea,))
+    if not filtered:
+        st.markdown('<div class="empty">No hay vídeos que coincidan con los filtros.</div>', unsafe_allow_html=True)
+    with st.expander("＋ Añadir idea de vídeo"):
+        with st.form(f"new-video-{niche.slug}"):
+            title = st.text_input("Título")
+            hook = st.text_input("Gancho de los primeros 2 segundos")
+            angle = st.text_area("Qué cuenta y por qué interesa")
+            visual = st.text_input("Plano real imprescindible al comienzo")
+            score = st.slider("Potencial editorial", 1, 100, 75)
+            if st.form_submit_button("Guardar idea de vídeo"):
+                add_idea(LIBRARY, VideoIdea(slugify(title), niche.slug, title, angle, hook, visual, score, "media", 0.0))
+                st.success("Idea añadida al proyecto.")
                 st.rerun()
 
-with tab_create:
-    st.subheader("Producción")
-    st.markdown('<p class="section-copy">Elige cualquier idea: el estudio aplica automáticamente la identidad correcta.</p>', unsafe_allow_html=True)
-    production_pool = scoped_ideas or ideas
-    selected_slug = st.session_state.get("selected_idea", production_pool[0].slug)
-    if selected_slug not in {item.slug for item in production_pool}:
-        selected_slug = production_pool[0].slug
-    choices = {item.slug: f"{niche_by_slug[item.niche_slug].name}  ·  {item.title}" for item in production_pool}
-    selected_slug = st.selectbox("Idea", list(choices), index=list(choices).index(selected_slug), format_func=choices.get)
-    idea = next(item for item in production_pool if item.slug == selected_slug)
-    production_niche = niche_by_slug[idea.niche_slug]
+elif view == "generate":
+    st.markdown('<h2 class="section-title">Generar vídeo</h2>', unsafe_allow_html=True)
+    st.markdown('<p class="section-sub">Configura y ejecuta la producción sin salir del panel del proyecto.</p>', unsafe_allow_html=True)
+    if not niche_ideas:
+        st.markdown('<div class="empty">Añade primero una idea de vídeo desde este proyecto.</div>', unsafe_allow_html=True)
+        st.stop()
+    selected_slug = st.session_state.get("selected_idea", niche_ideas[0].slug)
+    if selected_slug not in {item.slug for item in niche_ideas}:
+        selected_slug = niche_ideas[0].slug
+    idea_labels = {item.slug: item.title for item in niche_ideas}
+    selected_slug = st.selectbox("Idea de vídeo", list(idea_labels), index=list(idea_labels).index(selected_slug), format_func=idea_labels.get, key=f"generator-picker-{niche.slug}")
+    idea = next(item for item in niche_ideas if item.slug == selected_slug)
     st.markdown(
-        f'<div class="niche-card" style="--accent:{production_niche.primary_color};min-height:auto"><div class="niche-kicker">IDENTIDAD APLICADA</div><h3>{html.escape(production_niche.name)}</h3><p style="min-height:auto">{html.escape(production_niche.tone)}</p></div>',
+        f'<div class="brief" style="--project-color:{niche.primary_color}"><div class="brief-kicker">BRIEF DE PRODUCCIÓN</div><h3>{html.escape(idea.hook)}</h3><p><b>Primer plano:</b> {html.escape(idea.visual_hook)}</p><p><b>Dirección:</b> {html.escape(idea.angle)}</p></div>',
         unsafe_allow_html=True,
     )
-    default_script = (ROOT / "real_media" / "octopus" / "narracion.txt").read_text(encoding="utf-8") if idea.renderer == "octopus" else f"{idea.hook}\n\n{idea.angle}\n\n[Cierra con una pregunta que invite a comentar.]"
-    script = st.text_area("Guion", default_script, height=220)
-    cta_index = st.selectbox("Acción final", range(len(production_niche.cta_variants)), format_func=lambda i: production_niche.cta_variants[i])
-    col1, col2, col3 = st.columns(3)
-    col1.write(f"**Plano de apertura**  \n{idea.visual_hook}")
-    col2.write(f"**Política visual**  \n{production_niche.visual_policy}")
-    col3.metric("Coste previsto", f"${idea.estimated_cost_usd:.2f}", f"tope ${max_cost:.2f}")
-    blocked = idea.estimated_cost_usd > max_cost
-    if blocked:
-        st.error("Esta idea supera el presupuesto y no puede ejecutarse.")
-    if st.button("Crear proyecto", type="primary", use_container_width=True, disabled=blocked):
-        project = create_project(LIBRARY, idea, production_niche, script, cta_index)
-        st.session_state["current_project"] = str(project)
-        st.session_state["current_idea"] = idea.slug
-        st.success("Proyecto, briefing y paquete de publicación creados.")
-    project_value = st.session_state.get("current_project")
-    if project_value and st.session_state.get("current_idea") == idea.slug:
-        project = Path(project_value)
-        st.caption(f"Proyecto: {project.name}")
-        if idea.renderer == "octopus":
-            if st.button("Renderizar vídeo final", use_container_width=True):
-                with st.spinner("Renderizando localmente. No cierres esta ventana…"):
-                    video = render_octopus(ROOT, project, cta_index)
-                    cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
-                st.session_state["last_video"], st.session_state["last_cover"] = str(video), str(cover)
-                st.success("Vídeo y portada terminados.")
-        else:
-            st.warning("Briefing listo. El render se habilitará cuando exista un banco de metraje real validado para esta idea.")
+    default_script = (ROOT / "real_media" / "octopus" / "narracion.txt").read_text(encoding="utf-8") if idea.renderer == "octopus" else f"{idea.hook}\n\n{idea.angle}\n\n[Cierre potente seguido de una invitación breve a comentar.]"
+    script = st.text_area("Guion", default_script, height=220, key=f"script-{idea.slug}")
+    cta_index = st.selectbox("Cierre e interacción", range(len(niche.cta_variants)), format_func=lambda index: niche.cta_variants[index], key=f"cta-{niche.slug}")
+    b1, b2, b3 = st.columns(3)
+    b1.metric("Duración", "40 s")
+    b2.metric("Coste previsto", f"${idea.estimated_cost_usd:.2f}")
+    b3.metric("Límite", f"${max_cost:.2f}")
+    blocked_budget = idea.estimated_cost_usd > max_cost
+    if blocked_budget:
+        st.error("Producción bloqueada: supera el límite configurado.")
+    if idea.renderer == "octopus":
+        st.success("Todo el metraje, la narración y la plantilla están validados. Este vídeo puede generarse completamente en local.")
+        if st.button("▶  GENERAR VÍDEO FINAL", type="primary", use_container_width=True, disabled=blocked_budget):
+            project = create_project(LIBRARY, idea, niche, script, cta_index)
+            with st.spinner("Generando vídeo y portada en local…"):
+                video = render_octopus(ROOT, project, cta_index)
+                cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
+            st.session_state["last_project"] = str(project)
+            st.success("Vídeo final, portada y paquete de publicación terminados.")
+            st.video(str(video))
+            st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4")
+            st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg")
+    else:
+        st.warning("Falta incorporar metraje real específico para esta idea. Generar ahora produciría otro montaje genérico, justo lo que queremos evitar.")
+        uploaded = st.file_uploader("Añade los clips reales aprobados para esta producción", type=["mp4", "mov", "webm"], accept_multiple_files=True, key=f"clips-{idea.slug}")
+        ready = len(uploaded) >= 3
+        if uploaded:
+            st.caption(f"{len(uploaded)} clips añadidos. Se requieren al menos 3 planos diferentes.")
+        if st.button("Crear producción con este material", type="primary", use_container_width=True, disabled=blocked_budget or not ready):
+            project = create_project(LIBRARY, idea, niche, script, cta_index)
+            media = project / "media"
+            media.mkdir(exist_ok=True)
+            for index, clip in enumerate(uploaded, 1):
+                (media / f"{index:02d}-{Path(clip.name).name}").write_bytes(clip.getvalue())
+            st.session_state["last_project"] = str(project)
+            st.success("Producción creada con los clips reales. El montaje automático se habilitará tras validar orden, derechos y narración.")
 
-with tab_niches:
-    st.subheader("Identidades editoriales")
-    st.markdown('<p class="section-copy">Cinco canales posibles, cada uno con reglas visuales y voz propias.</p>', unsafe_allow_html=True)
-    for niche in niches:
-        with st.expander(f"{niche.name}  ·  {len(ideas_for(niche.slug))} ideas", expanded=scope_niche is not None and niche.slug == scope_niche.slug):
-            left, right = st.columns(2)
-            left.write(f"**Promesa:** {niche.promise}")
-            left.write(f"**Audiencia:** {niche.audience}")
-            right.write(f"**Tono:** {niche.tone}")
-            right.write(f"**Gancho:** {niche.hook_formula}")
-            st.caption(niche.visual_policy)
-    with st.expander("Crear otro nicho"):
-        with st.form("new-niche"):
-            name = st.text_input("Nombre")
-            promise = st.text_input("Promesa editorial")
-            audience = st.text_input("Audiencia")
-            tone = st.text_input("Tono")
-            color = st.color_picker("Color de identidad", "#FFD447")
-            if st.form_submit_button("Guardar nicho"):
-                add_niche(LIBRARY, Niche(slugify(name), name, promise, audience, tone, color, "#07111B", "Vídeo real prioritario.", "Gancho específico en los primeros 2 segundos.", ["¿Tú qué piensas? ↓"]))
-                st.success("Nicho creado.")
-                st.rerun()
-
-with tab_outputs:
-    st.subheader("Entregables")
-    st.markdown('<p class="section-copy">Vídeo, portada y textos reunidos por proyecto, sin mezclar identidades.</p>', unsafe_allow_html=True)
-    projects = list(list_projects(LIBRARY))
-    if not projects:
-        st.caption("Todavía no hay proyectos.")
-    for project in projects[:12]:
-        record = json.loads((project / "project.json").read_text(encoding="utf-8"))
-        project_niche = record.get("niche", {})
-        with st.expander(f"{project_niche.get('name', 'Sin nicho')}  ·  {record['idea']['title']}", expanded=project == projects[0]):
+elif view == "outputs":
+    st.markdown('<h2 class="section-title">Entregables</h2>', unsafe_allow_html=True)
+    st.markdown('<p class="section-sub">Solo aparecen los trabajos de este proyecto.</p>', unsafe_allow_html=True)
+    folders = []
+    for folder in list_projects(LIBRARY):
+        record = json.loads((folder / "project.json").read_text(encoding="utf-8"))
+        if record.get("niche", {}).get("slug") == niche.slug:
+            folders.append((folder, record))
+    if not folders:
+        st.markdown('<div class="empty">Este proyecto todavía no tiene producciones.</div>', unsafe_allow_html=True)
+    for folder, record in folders:
+        with st.expander(record["idea"]["title"], expanded=folder == folders[0][0]):
             pub = record["publication"]
-            st.caption(project.name)
+            st.caption(folder.name)
             st.write(f"**Título:** {pub['title']}")
             st.write(pub["description"])
             st.code(" ".join(pub["hashtags"]), language=None)
-            video, cover, publication = project / "video-final.mp4", project / "portada-9x16.jpg", project / "publicacion.txt"
+            video, cover, publication = folder / "video-final.mp4", folder / "portada-9x16.jpg", folder / "publicacion.txt"
             if video.exists():
                 st.video(str(video))
-                st.download_button("Descargar MP4", video.read_bytes(), video.name, "video/mp4", key=f"video-{project.name}")
+                st.download_button("Descargar MP4", video.read_bytes(), video.name, "video/mp4", key=f"video-{folder.name}")
             if cover.exists():
-                st.image(str(cover), width=230)
-                st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg", key=f"cover-{project.name}")
-            st.download_button("Descargar textos", publication.read_bytes(), publication.name, "text/plain", key=f"text-{project.name}")
+                st.image(str(cover), width=220)
+                st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg", key=f"cover-{folder.name}")
+            st.download_button("Descargar título, descripción y hashtags", publication.read_bytes(), publication.name, "text/plain", key=f"text-{folder.name}")
 
-st.caption("AutoShorts Studio funciona en local. Crear ideas y proyectos no consume uso de Codex ni activa proveedores de pago.")
+elif view == "identity":
+    st.markdown('<h2 class="section-title">Identidad del proyecto</h2>', unsafe_allow_html=True)
+    left, right = st.columns(2)
+    left.markdown(f"**Promesa**  \n{niche.promise}")
+    left.markdown(f"**Audiencia**  \n{niche.audience}")
+    left.markdown(f"**Tono**  \n{niche.tone}")
+    right.markdown(f"**Fórmula de gancho**  \n{niche.hook_formula}")
+    right.markdown(f"**Política visual**  \n{niche.visual_policy}")
+    right.color_picker("Color del proyecto", niche.primary_color, disabled=True)
+
+st.caption("AutoShorts funciona en local. El panel nunca activa proveedores de pago sin autorización.")
