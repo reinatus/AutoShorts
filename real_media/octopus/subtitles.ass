@@ -1,0 +1,32 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Main,Arial,64,&H00FFFFFF,&H000000FF,&H00101010,&HC0101010,-1,0,0,0,100,100,0,0,3,4,0,2,70,70,235,1
+Style: Hook,Arial,78,&H0000D7FF,&H000000FF,&H00101010,&HC0101010,-1,0,0,0,100,100,0,0,3,5,0,5,75,75,0,1
+Style: EndHook,Arial,70,&H0000D7FF,&H000000FF,&H00101010,&HC0101010,-1,0,0,0,100,100,0,0,3,5,0,5,65,65,0,1
+Style: Label,Arial,32,&H00FFFFFF,&H000000FF,&H80000000,&H60000000,-1,0,0,0,100,100,1,0,3,2,0,8,50,50,72,1
+Style: Credit,Arial,23,&H00E4E4E4,&H000000FF,&H80000000,&H50000000,0,0,0,0,100,100,0,0,3,1,0,1,25,25,28,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 2,0:00:00.00,0:00:02.01,Hook,,0,0,0,,NO TIENE 9 CEREBROS
+Dialogue: 0,0:00:00.00,0:00:02.01,Main,,0,0,0,,Un pulpo no tiene\Nnueve cerebros.
+Dialogue: 0,0:00:02.01,0:00:05.28,Main,,0,0,0,,Pero su inteligencia sí está\Nrepartida por todo el cuerpo.
+Dialogue: 0,0:00:05.28,0:00:08.58,Main,,0,0,0,,De sus aproximadamente\N500 millones de neuronas,
+Dialogue: 0,0:00:08.58,0:00:11.47,Main,,0,0,0,,unos 300 millones\Nestán en los brazos.
+Dialogue: 0,0:00:11.47,0:00:14.83,Main,,0,0,0,,Cada brazo posee cadenas de ganglios\Nque procesan el tacto,
+Dialogue: 0,0:00:14.83,0:00:17.64,Main,,0,0,0,,el movimiento y las señales\Nde sus ventosas.
+Dialogue: 0,0:00:17.64,0:00:20.29,Main,,0,0,0,,No necesita esperar una orden\Npara cada gesto.
+Dialogue: 0,0:00:20.29,0:00:25.47,Main,,0,0,0,,El cerebro central coordina.\NPero no controla cada detalle\Ncomo lo haría el nuestro.
+Dialogue: 0,0:00:25.47,0:00:31.61,Main,,0,0,0,,Tiene tres corazones y sangre azul,\Nadaptada al oxígeno del agua fría.
+Dialogue: 0,0:00:31.61,0:00:35.35,Main,,0,0,0,,Su cuerpo es blando, curioso\Ny capaz de resolver problemas.
+Dialogue: 1,0:00:35.35,0:00:39.85,EndHook,,0,0,0,,SI PIENSA CON TODO EL CUERPO...\N¿DÓNDE EMPIEZA SU MENTE?
+Dialogue: 2,0:00:00.00,0:00:39.85,Label,,0,0,0,,EL CEREBRO REPARTIDO DEL PULPO
+Dialogue: 2,0:00:36.00,0:00:39.85,Credit,,0,0,0,,Vídeo real: John · Roser Gari Perez · NOAA · Créditos adjuntos
+
