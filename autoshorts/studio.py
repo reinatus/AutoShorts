@@ -181,6 +181,55 @@ def render_octopus(repo_root: Path, project: Path, cta_index: int) -> Path:
     command = [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(repo_root / "scripts" / "render_octopus_short.ps1"), "-Output", str(output), "-CtaVariant", str(cta_index % 4)]
     completed = subprocess.run(command, cwd=repo_root, capture_output=True, text=True, timeout=900)
     if completed.returncode != 0 or not output.exists(): raise RuntimeError((completed.stderr or completed.stdout or "El render no produjo un MP4.").strip())
+    _mark_rendered(project)
+    return output
+
+
+def render_uploaded_short(repo_root: Path, project: Path, clips: list[Path], script: str, cta: str) -> Path:
+    """Render a 40-second vertical short from user-approved real video clips."""
+    if len(clips) < 3:
+        raise ValueError("Se necesitan al menos tres clips para evitar un montaje repetitivo.")
+    ffmpeg = next((repo_root / ".tools").rglob("ffmpeg*.exe"), None)
+    piper = repo_root / ".tools" / "piper" / "piper" / "piper.exe"
+    model = repo_root / ".tools" / "piper" / "es_ES-sharvard-medium.onnx"
+    if not ffmpeg: raise FileNotFoundError("FFmpeg no está instalado en .tools.")
+    if not piper.exists() or not model.exists(): raise FileNotFoundError("Falta Piper o su voz española local.")
+
+    narration = project / "narracion.wav"
+    spoken = subprocess.run(
+        [str(piper), "--model", str(model), "--output_file", str(narration), "--speaker", "0", "--length_scale", "1.0"],
+        input=script.strip(), capture_output=True, text=True, cwd=repo_root, timeout=180,
+    )
+    if spoken.returncode != 0 or not narration.exists():
+        raise RuntimeError((spoken.stderr or "No se pudo generar la narración local.").strip())
+
+    subtitles = project / "subtitulos.ass"
+    subtitles.write_text(_ass_subtitles(script, cta), encoding="utf-8-sig")
+    segment_duration = 40.0 / len(clips)
+    command: list[str] = [str(ffmpeg), "-y", "-hide_banner", "-loglevel", "error"]
+    for clip in clips:
+        command += ["-stream_loop", "-1", "-i", str(clip)]
+    command += ["-i", str(narration)]
+    filters = []
+    for index in range(len(clips)):
+        filters.append(
+            f"[{index}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
+            f"crop=1080:1920,fps=30,trim=duration={segment_duration:.3f},setpts=PTS-STARTPTS[v{index}]"
+        )
+    joined = "".join(f"[v{index}]" for index in range(len(clips)))
+    ass_path = str(subtitles).replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
+    filters.append(f"{joined}concat=n={len(clips)}:v=1:a=0,trim=duration=40,ass='{ass_path}'[v]")
+    filters.append(f"[{len(clips)}:a]apad=pad_dur=40[a]")
+    output = project / "video-final.mp4"
+    command += [
+        "-filter_complex", ";".join(filters), "-map", "[v]", "-map", "[a]", "-t", "40",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", str(output),
+    ]
+    completed = subprocess.run(command, cwd=repo_root, capture_output=True, text=True, timeout=900)
+    if completed.returncode != 0 or not output.exists():
+        raise RuntimeError((completed.stderr or "El montaje local no produjo un MP4.").strip())
+    _mark_rendered(project)
     return output
 
 
@@ -205,6 +254,38 @@ def _thumbnail_headline(idea: VideoIdea) -> str:
     return " ".join(re.sub(r"[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 ]", "", idea.hook).upper().split()[:5])
 
 
+def _ass_time(seconds: float) -> str:
+    whole = int(seconds)
+    return f"{whole // 3600}:{(whole % 3600) // 60:02d}:{whole % 60:02d}.{int((seconds - whole) * 100):02d}"
+
+
+def _ass_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}").replace("\n", " ")
+
+
+def _ass_subtitles(script: str, cta: str) -> str:
+    words = script.replace("\n", " ").split()
+    chunks = [" ".join(words[index:index + 7]) for index in range(0, len(words), 7)] or [""]
+    usable = 36.5
+    total_words = max(1, sum(len(chunk.split()) for chunk in chunks))
+    cursor = 0.0
+    events = []
+    for chunk in chunks:
+        duration = max(0.9, usable * len(chunk.split()) / total_words)
+        end = min(usable, cursor + duration)
+        events.append(f"Dialogue: 0,{_ass_time(cursor)},{_ass_time(end)},Body,,0,0,0,,{_ass_escape(chunk)}")
+        cursor = end
+    events.append(f"Dialogue: 1,0:00:36.50,0:00:40.00,CTA,,0,0,0,,{_ass_escape(cta)}")
+    return "\n".join([
+        "[Script Info]", "ScriptType: v4.00+", "PlayResX: 1080", "PlayResY: 1920", "WrapStyle: 2", "ScaledBorderAndShadow: yes", "",
+        "[V4+ Styles]",
+        "Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding",
+        "Style: Body,Arial,58,&H00FFFFFF,&H000000FF,&H00101010,&H70000000,-1,0,0,0,100,100,0,0,1,5,1,2,90,90,245,1",
+        "Style: CTA,Arial,70,&H0047D4FF,&H000000FF,&H00101010,&H78000000,-1,0,0,0,100,100,0,0,1,6,1,5,100,100,500,1", "",
+        "[Events]", "Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text", *events, "",
+    ])
+
+
 def format_publication(package: dict) -> str:
     return f"TÍTULO\n{package['title']}\n\nDESCRIPCIÓN\n{package['description']}\n\nHASHTAGS\n{' '.join(package['hashtags'])}\n\nCTA\n{package['cta']}\n\nPORTADA\n{package['thumbnail']['headline']}\n{package['thumbnail']['brief']}\n"
 
@@ -213,3 +294,13 @@ def _read_json(path: Path) -> list[dict]: return json.loads(path.read_text(encod
 def _write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _mark_rendered(project: Path) -> None:
+    record_path = project / "project.json"
+    if not record_path.exists():
+        return
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    record["status"] = "rendered"
+    record["rendered_at"] = datetime.now(timezone.utc).isoformat()
+    _write_json(record_path, record)
