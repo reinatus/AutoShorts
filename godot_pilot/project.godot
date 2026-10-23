@@ -1,0 +1,19 @@
+[application]
+config/name="AutoShorts Procedural Pilot"
+run/main_scene="res://main.tscn"
+
+[display]
+window/size/viewport_width=1080
+window/size/viewport_height=1920
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+
+[editor]
+movie_writer/movie_file="res://output/pilot.avi"
+movie_writer/fps=30
+movie_writer/mjpeg_quality=0.90
+

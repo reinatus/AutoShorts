@@ -1,6 +1,36 @@
-# AutoShorts
+# AutoShorts Studio
+
+Aplicación local para gestionar nichos, priorizar ideas, producir Shorts y descargar el paquete completo de publicación.
+
+## Abrir el estudio
+
+1. Haz doble clic en `INSTALAR.bat` la primera vez.
+2. Haz doble clic en `INICIAR.bat`.
+3. El estudio se abre en `http://localhost:8501`.
+
+La interfaz está organizada por **proyectos/canales**. Cada proyecto tiene su propio panel con **Resumen**, **Ideas de vídeos**, **Generar vídeo**, **Entregables** e **Identidad**. La cartera permite cambiar de temática sin mezclar sus ideas, producciones ni metadatos. Incluye cinco proyectos editoriales de partida:
+
+- `Mentes Salvajes`;
+- `Historia Oculta`;
+- `Lugares Límite`;
+- `Ciencia Invisible`;
+- `Futuro Real`.
+
+Cada tarjeta representa una idea concreta de vídeo y abre directamente su generador. El panel aplica automáticamente el tono, color, política visual, CTA y metadatos del proyecto. El vídeo del pulpo dispone ya de generación final completa desde el panel. Para las demás ideas se pueden cargar tres o más clips reales aprobados y generar también desde el panel un MP4 de 40 segundos con narración local, subtítulos, cierre, portada y textos de publicación.
+
+Cada proyecto genera:
+
+- guion y configuración editorial;
+- título, descripción, hashtags, palabras clave y CTA;
+- lista de comprobaciones para publicar;
+- MP4 y portada vertical cuando su renderizador está disponible;
+- presupuesto previsto y bloqueo si supera el límite indicado.
+
+La portada de Shorts se genera a 2160×3840. Su disponibilidad de subida depende de las funciones habilitadas en la cuenta y en YouTube Studio.
 
 Fábrica de vídeos verticales 9:16 construida sobre MoneyPrinterTurbo.
+
+> **Piloto nuevo:** la ruta `godot_pilot` genera 40 segundos de animación 2D real, sin imágenes estáticas ni APIs de pago. Consulta [la arquitectura y los límites](docs/ARQUITECTURA_GODOT.md).
 
 ## Objetivo
 
@@ -38,6 +68,16 @@ MP4 1080x1920
 ```
 
 ## Arranque
+
+### Piloto procedural recomendado (Windows)
+
+1. Doble clic en `INSTALAR_PILOTO.bat`.
+2. Doble clic en `RENDER_PILOTO.bat`.
+3. Abre `godot_pilot\output\autoshorts_pilot.mp4`.
+
+La primera ejecución descarga Godot y FFmpeg de forma local al proyecto. El render base no usa claves ni servicios facturables y aplica un tope de 0,50 USD mediante `autoshorts/budget.py` para futuras extensiones.
+
+### Flujo heredado MoneyPrinterTurbo
 
 1. Arranca MoneyPrinterTurbo y deja su API disponible en `http://127.0.0.1:8080`.
 2. Copia `.env.example` a `.env` y configura las claves que quieras usar.

@@ -1,0 +1,32 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Main,Arial,65,&H00FFFFFF,&H000000FF,&H00101010,&HC0101010,-1,0,0,0,100,100,0,0,3,4,0,2,70,70,245,1
+Style: Hook,Arial,78,&H0000D7FF,&H000000FF,&H00101010,&HC0101010,-1,0,0,0,100,100,0,0,3,5,0,5,85,85,0,1
+Style: Label,Arial,34,&H00FFFFFF,&H000000FF,&H80000000,&H60000000,-1,0,0,0,100,100,1,0,3,2,0,8,50,50,72,1
+Style: Credit,Arial,24,&H00E4E4E4,&H000000FF,&H80000000,&H50000000,0,0,0,0,100,100,0,0,3,1,0,1,32,32,32,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 1,0:00:00.00,0:00:03.50,Hook,,0,0,0,,¿PROHIBIDO MORIR?
+Dialogue: 0,0:00:00.00,0:00:04.10,Main,,0,0,0,,En Longyearbyen,\Nuna ciudad del Ártico,
+Dialogue: 0,0:00:04.10,0:00:08.00,Main,,0,0,0,,hay una historia que\Nparece imposible:
+Dialogue: 0,0:00:08.00,0:00:10.70,Main,,0,0,0,,dicen que está\Nprohibido morir.
+Dialogue: 0,0:00:10.70,0:00:13.10,Main,,0,0,0,,Todo empieza\Nbajo estas casas.
+Dialogue: 0,0:00:13.10,0:00:16.70,Main,,0,0,0,,El suelo permanece congelado\Ndurante todo el año.
+Dialogue: 0,0:00:16.70,0:00:21.90,Main,,0,0,0,,Cuando intentaron usar el cementerio,\Ndescubrieron que el permafrost...
+Dialogue: 0,0:00:21.90,0:00:25.80,Main,,0,0,0,,impedía que los cuerpos se\Ndescompusieran con normalidad.
+Dialogue: 0,0:00:25.80,0:00:29.00,Main,,0,0,0,,Por eso dejaron de realizar\Nnuevos entierros allí.
+Dialogue: 0,0:00:29.00,0:00:33.30,Main,,0,0,0,,Si alguien está gravemente enfermo,\Nsuele ser trasladado...
+Dialogue: 0,0:00:33.30,0:00:35.10,Main,,0,0,0,,al territorio\Ncontinental noruego.
+Dialogue: 0,0:00:35.10,0:00:37.20,Main,,0,0,0,,Así nació el mito.\NNo hay una ley que castigue morir.
+Dialogue: 0,0:00:37.20,0:00:40.00,Main,,0,0,0,,Es una solución práctica\Na un problema extremo.
+Dialogue: 2,0:00:00.00,0:00:40.00,Label,,0,0,0,,SVALBARD · 78° NORTE
+Dialogue: 2,0:00:37.20,0:00:40.00,Credit,,0,0,0,,Imágenes: Context News y AWeith · CC BY-SA 4.0 · Montaje adaptado
+
