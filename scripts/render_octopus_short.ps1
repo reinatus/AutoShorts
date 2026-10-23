@@ -65,7 +65,12 @@ for ($i=1; $i -le 10; $i++) {
 $videoTags = (0..9 | ForEach-Object { "[$($_):v]" }) -join ""
 $subs = $renderSubtitles.Replace('\','/').Replace(':','\:')
 $filter = $videoTags + "concat=n=10:v=1:a=0,trim=duration=39.85,setpts=PTS-STARTPTS,ass='$subs'[v]"
-$outputPath = [System.IO.Path]::GetFullPath((Join-Path $root $Output))
+$outputPath = if ([System.IO.Path]::IsPathRooted($Output)) {
+    [System.IO.Path]::GetFullPath($Output)
+}
+else {
+    [System.IO.Path]::GetFullPath((Join-Path $root $Output))
+}
 New-Item -ItemType Directory -Force (Split-Path -Parent $outputPath) | Out-Null
 
 & $ffmpeg -y -hide_banner -loglevel error @videoInputs -i (Join-Path $temp "narracion.wav") `
