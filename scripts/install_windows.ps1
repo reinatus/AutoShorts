@@ -69,8 +69,11 @@ Write-Host "Python: $python"
 
 if (-not $SkipPythonPackages) {
     Write-Step "Instalando la aplicación en su runtime local"
-    New-Item -ItemType Directory -Force -Path $packages | Out-Null
-    & $python -m pip install --disable-pip-version-check --upgrade --target $packages -r (Join-Path $root "requirements.txt")
+    $installTemp = Join-Path $runtime "tmp"
+    New-Item -ItemType Directory -Force -Path $packages, $installTemp | Out-Null
+    $env:TEMP = $installTemp
+    $env:TMP = $installTemp
+    & $python -m pip install --disable-pip-version-check --no-cache-dir --upgrade --target $packages -r (Join-Path $root "requirements.txt")
     if ($LASTEXITCODE -ne 0) { throw "No se pudieron instalar las dependencias de AutoShorts" }
 }
 
