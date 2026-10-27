@@ -3,7 +3,7 @@ setlocal EnableExtensions
 cd /d "%~dp0"
 title AutoShorts Studio
 
-if not exist ".venv\Scripts\python.exe" (
+if not exist ".runtime\python-path.txt" (
   echo AutoShorts no esta instalado. Abriendo el instalador...
   call INSTALAR.bat
   if errorlevel 1 exit /b 1
