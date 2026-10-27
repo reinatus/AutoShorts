@@ -18,13 +18,14 @@ function Get-Download([string]$Uri, [string]$Destination, [string]$Sha256) {
         $current = (Get-FileHash -Algorithm SHA256 -LiteralPath $Destination).Hash.ToLowerInvariant()
         if ($current -eq $Sha256) { return }
     }
-    $partial = "$Destination.partial"
-    Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
-    & curl.exe --fail --location --retry 3 --output $partial $Uri
+    Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+    & curl.exe --fail --location --retry 3 --output $Destination $Uri
     if ($LASTEXITCODE -ne 0) { throw "No se pudo descargar $Uri" }
-    $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $partial).Hash.ToLowerInvariant()
-    if ($actual -ne $Sha256) { throw "La descarga no superó la verificación SHA-256: $Uri" }
-    Move-Item -LiteralPath $partial -Destination $Destination -Force
+    $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $Destination).Hash.ToLowerInvariant()
+    if ($actual -ne $Sha256) {
+        Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+        throw "La descarga no superó la verificación SHA-256: $Uri"
+    }
 }
 
 Set-Location $root
