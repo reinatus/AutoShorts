@@ -178,6 +178,19 @@ def render_octopus(repo_root: Path, project: Path, cta_index: int) -> Path:
     output = project / "video-final.mp4"
     shell = shutil.which("pwsh") or shutil.which("powershell")
     if not shell: raise FileNotFoundError("No se encontró PowerShell para ejecutar el render.")
+    media = repo_root / "real_media" / "octopus"
+    required = [
+        media / "common_octopus.webm", media / "reef_octopus.ogv",
+        media / "suckers_octopus.webm", media / "sealife_octopus.ogv",
+        *[media / "generated" / f"phrase_{index:02d}.wav" for index in range(1, 12)],
+    ]
+    if not all(path.exists() for path in required):
+        prepare = subprocess.run(
+            [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(repo_root / "scripts" / "prepare_octopus_media.ps1")],
+            cwd=repo_root, capture_output=True, text=True, timeout=900,
+        )
+        if prepare.returncode != 0:
+            raise RuntimeError((prepare.stderr or prepare.stdout or "No se pudo preparar el metraje del piloto.").strip())
     command = [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(repo_root / "scripts" / "render_octopus_short.ps1"), "-Output", str(output), "-CtaVariant", str(cta_index % 4)]
     completed = subprocess.run(command, cwd=repo_root, capture_output=True, text=True, timeout=900)
     if completed.returncode != 0 or not output.exists(): raise RuntimeError((completed.stderr or completed.stdout or "El render no produjo un MP4.").strip())
