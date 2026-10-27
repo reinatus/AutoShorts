@@ -2,6 +2,9 @@
 param([switch]$Quiet)
 
 $root = Split-Path -Parent $PSScriptRoot
+$runtime = Join-Path $root ".runtime"
+$pythonRecord = Join-Path $runtime "python-path.txt"
+$packages = Join-Path $runtime "python-packages"
 $failures = [System.Collections.Generic.List[string]]::new()
 $checks = [System.Collections.Generic.List[string]]::new()
 
@@ -9,13 +12,17 @@ function Check([bool]$Condition, [string]$Ok, [string]$Failure) {
     if ($Condition) { $checks.Add("OK  $Ok") } else { $failures.Add("ERROR  $Failure") }
 }
 
-$python = Join-Path $root ".venv\Scripts\python.exe"
-Check (Test-Path $python) "Entorno Python" "No existe .venv. Ejecuta INSTALAR.bat."
-if (Test-Path $python) {
+$python = if (Test-Path $pythonRecord) { (Get-Content -LiteralPath $pythonRecord -Raw).Trim() } else { "" }
+Check ($python -and (Test-Path $python)) "Python compatible" "No hay un runtime Python registrado. Ejecuta INSTALAR.bat."
+Check (Test-Path $packages) "Runtime local" "Falta .runtime\python-packages. Ejecuta INSTALAR.bat."
+if ($python -and (Test-Path $python) -and (Test-Path $packages)) {
+    $previousPath = $env:PYTHONPATH
+    $env:PYTHONPATH = $packages
     & $python -c "import streamlit, requests, dotenv, pydantic; import autoshorts.studio" *> $null
     Check ($LASTEXITCODE -eq 0) "Dependencias Python" "Faltan dependencias. Ejecuta INSTALAR.bat."
     & $python -m compileall -q (Join-Path $root "app.py") (Join-Path $root "autoshorts")
     Check ($LASTEXITCODE -eq 0) "Código compilable" "Hay un error de sintaxis en la aplicación."
+    $env:PYTHONPATH = $previousPath
 }
 $ffmpeg = Get-ChildItem (Join-Path $root ".tools") -Filter "ffmpeg*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
 Check ($null -ne $ffmpeg) "FFmpeg" "FFmpeg no está instalado. Ejecuta INSTALAR.bat."
