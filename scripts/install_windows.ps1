@@ -46,11 +46,13 @@ if (-not (Test-Path $uvExe)) {
 $env:UV_CACHE_DIR = Join-Path $cache "uv"
 $env:UV_PYTHON_INSTALL_DIR = Join-Path $runtime "python"
 $env:UV_PYTHON_PREFERENCE = "only-managed"
+$env:UV_PYTHON_INSTALL_BIN = "0"
+$env:UV_LINK_MODE = "copy"
 $venvPython = Join-Path $venv "Scripts\python.exe"
 
 if (-not $SkipPythonPackages) {
     Write-Step "Instalando Python local y dependencias"
-    & $uvExe python install 3.11
+    & $uvExe python install 3.11 --no-bin
     if ($LASTEXITCODE -ne 0) { throw "No se pudo descargar el Python local de AutoShorts." }
     if (-not (Test-Path $venvPython)) {
         & $uvExe venv --python 3.11 $venv
