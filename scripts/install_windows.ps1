@@ -2,39 +2,16 @@
 param([switch]$SkipPythonPackages, [switch]$SkipVideoTools)
 
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 $root = Split-Path -Parent $PSScriptRoot
-$tools = Join-Path $root ".tools"
+$toolsDir = Join-Path $root ".tools"
 $cache = Join-Path $root ".cache"
 $runtime = Join-Path $root ".runtime"
-$packages = Join-Path $runtime "python-packages"
+$venv = Join-Path $runtime "venv"
 $pythonRecord = Join-Path $runtime "python-path.txt"
-New-Item -ItemType Directory -Force -Path $tools, $cache, $runtime | Out-Null
+New-Item -ItemType Directory -Force -Path $toolsDir, $cache, $runtime | Out-Null
 
 function Write-Step([string]$Message) { Write-Host "`n==> $Message" -ForegroundColor Cyan }
-
-function Resolve-Python {
-    $candidates = [System.Collections.Generic.List[object]]::new()
-    $command = Get-Command python.exe -ErrorAction SilentlyContinue
-    if ($command) { $candidates.Add([pscustomobject]@{ Exe=$command.Source; Args=[string[]]@() }) }
-    foreach ($path in @(
-        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\python.exe"),
-        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python311\python.exe"),
-        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python310\python.exe")
-    )) { if (Test-Path $path) { $candidates.Add([pscustomobject]@{ Exe=$path; Args=[string[]]@() }) } }
-    $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
-    if ($launcher) {
-        foreach ($version in @("-3.12", "-3.11", "-3.10")) {
-            $candidates.Add([pscustomobject]@{ Exe=$launcher.Source; Args=[string[]]@($version) })
-        }
-    }
-    foreach ($candidate in $candidates) {
-        try {
-            $resolved = (& $candidate.Exe @($candidate.Args) -c "import sys; assert (3,10) <= sys.version_info[:2] < (3,13); print(sys.executable)" 2>$null | Select-Object -Last 1).Trim()
-            if ($LASTEXITCODE -eq 0 -and (Test-Path $resolved)) { return $resolved }
-        } catch {}
-    }
-    return $null
-}
 
 function Get-Download([string]$Uri, [string]$Destination, [string]$Sha256) {
     if (Test-Path $Destination) {
@@ -51,46 +28,54 @@ function Get-Download([string]$Uri, [string]$Destination, [string]$Sha256) {
 }
 
 Set-Location $root
-Write-Step "Comprobando Python 3.10-3.12"
-$python = Resolve-Python
-if (-not $python) {
-    $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
-    if (-not $winget) {
-        throw "No se encontró Python compatible ni winget. Instala Python 3.11 desde python.org, marca 'Add Python to PATH' y vuelve a ejecutar INSTALAR.bat."
-    }
-    Write-Host "Python no está instalado. Se instalará Python 3.11 para el usuario actual."
-    & $winget.Source install --id Python.Python.3.11 --exact --scope user --silent --accept-package-agreements --accept-source-agreements
-    if ($LASTEXITCODE -ne 0) { throw "winget no pudo instalar Python 3.11." }
-    $python = Resolve-Python
-    if (-not $python) { throw "Python se instaló, pero aún no se puede localizar. Cierra esta ventana y ejecuta INSTALAR.bat de nuevo." }
+Write-Step "Preparando el runtime autocontenido"
+$uvRoot = Join-Path $toolsDir "uv"
+$uvExe = Join-Path $uvRoot "uv.exe"
+if (-not (Test-Path $uvExe)) {
+    $uvZip = Join-Path $cache "uv-x86_64-pc-windows-msvc-0.13.6.zip"
+    Get-Download "https://github.com/astral-sh/uv/releases/download/0.13.6/uv-x86_64-pc-windows-msvc.zip" $uvZip "a2a8820d5eea32f08ef467ef3b7f66883a9b076d5737a2fc2fbb5f458d1bb50f"
+    if (Test-Path $uvRoot) { Remove-Item -LiteralPath $uvRoot -Recurse -Force }
+    New-Item -ItemType Directory -Force -Path $uvRoot | Out-Null
+    Expand-Archive -LiteralPath $uvZip -DestinationPath $uvRoot -Force
+    $foundUv = Get-ChildItem $uvRoot -Filter "uv.exe" -Recurse | Select-Object -First 1
+    if (-not $foundUv) { throw "No se encontró uv.exe dentro del paquete descargado." }
+    if ($foundUv.FullName -ne $uvExe) { Copy-Item -LiteralPath $foundUv.FullName -Destination $uvExe -Force }
 }
-[IO.File]::WriteAllText($pythonRecord, $python)
-Write-Host "Python: $python"
+
+$env:UV_CACHE_DIR = Join-Path $cache "uv"
+$env:UV_PYTHON_INSTALL_DIR = Join-Path $runtime "python"
+$env:UV_PYTHON_PREFERENCE = "only-managed"
+$venvPython = Join-Path $venv "Scripts\python.exe"
 
 if (-not $SkipPythonPackages) {
-    Write-Step "Instalando la aplicación en su runtime local"
-    $installTemp = Join-Path $runtime "tmp"
-    New-Item -ItemType Directory -Force -Path $packages, $installTemp | Out-Null
-    $env:TEMP = $installTemp
-    $env:TMP = $installTemp
-    & $python -m pip install --disable-pip-version-check --no-cache-dir --upgrade --target $packages -r (Join-Path $root "requirements.txt")
-    if ($LASTEXITCODE -ne 0) { throw "No se pudieron instalar las dependencias de AutoShorts" }
+    Write-Step "Instalando Python local y dependencias"
+    & $uvExe python install 3.11
+    if ($LASTEXITCODE -ne 0) { throw "No se pudo descargar el Python local de AutoShorts." }
+    if (-not (Test-Path $venvPython)) {
+        & $uvExe venv --python 3.11 $venv
+        if ($LASTEXITCODE -ne 0) { throw "No se pudo crear el runtime local." }
+    }
+    & $uvExe pip install --python $venvPython -r (Join-Path $root "requirements.txt")
+    if ($LASTEXITCODE -ne 0) { throw "No se pudieron instalar las dependencias de AutoShorts." }
 }
+if (-not (Test-Path $venvPython)) { throw "Falta el Python local. Vuelve a ejecutar INSTALAR.bat sin opciones." }
+[IO.File]::WriteAllText($pythonRecord, $venvPython)
+Write-Host "Runtime: $venvPython"
 
 if (-not $SkipVideoTools) {
     Write-Step "Instalando FFmpeg"
-    $ffmpeg = Get-ChildItem $tools -Filter "ffmpeg*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    $ffmpeg = Get-ChildItem $toolsDir -Filter "ffmpeg*.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $ffmpeg) {
         $wheel = Join-Path $cache "imageio_ffmpeg-0.6.0-py3-none-win_amd64.whl"
         Get-Download "https://files.pythonhosted.org/packages/2c/c6/fa760e12a2483469e2bf5058c5faff664acf66cadb4df2ad6205b016a73d/imageio_ffmpeg-0.6.0-py3-none-win_amd64.whl" $wheel "02fa47c83703c37df6bfe4896aab339013f62bf02c5ebf2dce6da56af04ffc0a"
-        $ffmpegDir = Join-Path $tools "imageio_ffmpeg"
+        $ffmpegDir = Join-Path $toolsDir "imageio_ffmpeg"
         New-Item -ItemType Directory -Force -Path $ffmpegDir | Out-Null
         & tar.exe -xf $wheel -C $ffmpegDir
-        if ($LASTEXITCODE -ne 0) { throw "No se pudo extraer FFmpeg" }
+        if ($LASTEXITCODE -ne 0) { throw "No se pudo extraer FFmpeg." }
     }
 
     Write-Step "Instalando la narración local Piper"
-    $piperRoot = Join-Path $tools "piper"
+    $piperRoot = Join-Path $toolsDir "piper"
     $piperExe = Join-Path $piperRoot "piper\piper.exe"
     if (-not (Test-Path $piperExe)) {
         $piperZip = Join-Path $cache "piper_windows_amd64.zip"
