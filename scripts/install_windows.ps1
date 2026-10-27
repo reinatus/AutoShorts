@@ -5,20 +5,14 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $tools = Join-Path $root ".tools"
 $cache = Join-Path $root ".cache"
-$venvPython = Join-Path $root ".venv\Scripts\python.exe"
-New-Item -ItemType Directory -Force -Path $tools, $cache | Out-Null
+$runtime = Join-Path $root ".runtime"
+$packages = Join-Path $runtime "python-packages"
+$pythonRecord = Join-Path $runtime "python-path.txt"
+New-Item -ItemType Directory -Force -Path $tools, $cache, $runtime | Out-Null
 
 function Write-Step([string]$Message) { Write-Host "`n==> $Message" -ForegroundColor Cyan }
 
-function Test-Python([string]$Executable, [string[]]$Arguments = @()) {
-    if (-not $Executable) { return $false }
-    try {
-        & $Executable @Arguments -c "import sys; raise SystemExit(0 if (3,10) <= sys.version_info[:2] < (3,13) else 1)" *> $null
-        return $LASTEXITCODE -eq 0
-    } catch { return $false }
-}
-
-function Find-Python {
+function Resolve-Python {
     $candidates = [System.Collections.Generic.List[object]]::new()
     $command = Get-Command python.exe -ErrorAction SilentlyContinue
     if ($command) { $candidates.Add([pscustomobject]@{ Exe=$command.Source; Args=[string[]]@() }) }
@@ -34,7 +28,10 @@ function Find-Python {
         }
     }
     foreach ($candidate in $candidates) {
-        if (Test-Python $candidate.Exe $candidate.Args) { return $candidate }
+        try {
+            $resolved = (& $candidate.Exe @($candidate.Args) -c "import sys; assert (3,10) <= sys.version_info[:2] < (3,13); print(sys.executable)" 2>$null | Select-Object -Last 1).Trim()
+            if ($LASTEXITCODE -eq 0 -and (Test-Path $resolved)) { return $resolved }
+        } catch {}
     }
     return $null
 }
@@ -55,7 +52,7 @@ function Get-Download([string]$Uri, [string]$Destination, [string]$Sha256) {
 
 Set-Location $root
 Write-Step "Comprobando Python 3.10-3.12"
-$python = Find-Python
+$python = Resolve-Python
 if (-not $python) {
     $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
     if (-not $winget) {
@@ -64,21 +61,16 @@ if (-not $python) {
     Write-Host "Python no está instalado. Se instalará Python 3.11 para el usuario actual."
     & $winget.Source install --id Python.Python.3.11 --exact --scope user --silent --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE -ne 0) { throw "winget no pudo instalar Python 3.11." }
-    $python = Find-Python
+    $python = Resolve-Python
     if (-not $python) { throw "Python se instaló, pero aún no se puede localizar. Cierra esta ventana y ejecuta INSTALAR.bat de nuevo." }
 }
-Write-Host "Python: $($python.Exe) $($python.Args -join ' ')"
+[IO.File]::WriteAllText($pythonRecord, $python)
+Write-Host "Python: $python"
 
 if (-not $SkipPythonPackages) {
-    Write-Step "Creando el entorno aislado"
-    if (-not (Test-Path $venvPython)) {
-        & $python.Exe @($python.Args) -m venv (Join-Path $root ".venv")
-        if ($LASTEXITCODE -ne 0) { throw "No se pudo crear .venv" }
-    }
-    Write-Step "Instalando la aplicación"
-    & $venvPython -m pip install --disable-pip-version-check --upgrade pip
-    if ($LASTEXITCODE -ne 0) { throw "No se pudo actualizar pip" }
-    & $venvPython -m pip install --disable-pip-version-check -r (Join-Path $root "requirements.txt")
+    Write-Step "Instalando la aplicación en su runtime local"
+    New-Item -ItemType Directory -Force -Path $packages | Out-Null
+    & $python -m pip install --disable-pip-version-check --upgrade --target $packages -r (Join-Path $root "requirements.txt")
     if ($LASTEXITCODE -ne 0) { throw "No se pudieron instalar las dependencias de AutoShorts" }
 }
 
