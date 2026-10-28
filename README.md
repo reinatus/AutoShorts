@@ -27,7 +27,10 @@ Si falla, ejecuta **DIAGNOSTICO.bat**. Consulta tambien [la guia detallada](DESC
 - narracion local, subtitulos, gancho, cierre y CTA;
 - portada vertical;
 - titulo, descripcion, hashtags, palabras clave y lista de publicacion;
-- paquete descargable de entregables;
+- revisión previa de clips y storyboard antes de renderizar;
+- registro obligatorio de fuentes y licencias;
+- recuperación y reintento de renders fallidos;
+- paquete ZIP descargable con todos los entregables;
 - arranque local sin MoneyPrinterTurbo y sin servicios de pago obligatorios.
 
 ## Limites actuales
