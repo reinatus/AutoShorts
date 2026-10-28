@@ -44,24 +44,27 @@ if (-not (Test-Path $uvExe)) {
 }
 
 $env:UV_CACHE_DIR = Join-Path $cache "uv"
-$env:UV_PYTHON_INSTALL_DIR = Join-Path $runtime "python"
-$env:UV_PYTHON_PREFERENCE = "only-managed"
-$env:UV_PYTHON_INSTALL_BIN = "0"
 $env:UV_LINK_MODE = "copy"
-$venvPython = Join-Path $venv "Scripts\python.exe"
+$pythonRoot = Join-Path $runtime "python-embed"
+$venvPython = Join-Path $pythonRoot "python.exe"
 
 if (-not $SkipPythonPackages) {
-    Write-Step "Instalando Python local y dependencias"
-    & $uvExe python install 3.11 --no-bin
-    if ($LASTEXITCODE -ne 0) { throw "No se pudo descargar el Python local de AutoShorts." }
+    Write-Step "Instalando Python portátil y dependencias"
     if (-not (Test-Path $venvPython)) {
-        & $uvExe venv --python 3.11 $venv
-        if ($LASTEXITCODE -ne 0) { throw "No se pudo crear el runtime local." }
+        $pythonZip = Join-Path $cache "python-3.11.9-embed-amd64.zip"
+        Get-Download "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip" $pythonZip "009d6bf7e3b2ddca3d784fa09f90fe54336d5b60f0e0f305c37f400bf83cfd3b"
+        New-Item -ItemType Directory -Force -Path $pythonRoot | Out-Null
+        Expand-Archive -LiteralPath $pythonZip -DestinationPath $pythonRoot -Force
+        $pth = Join-Path $pythonRoot "python311._pth"
+        $pthContent = Get-Content -LiteralPath $pth -Raw
+        $pthContent = $pthContent -replace "#import site", "Lib\\site-packages`r`nimport site"
+        [IO.File]::WriteAllText($pth, $pthContent)
+        New-Item -ItemType Directory -Force -Path (Join-Path $pythonRoot "Lib\site-packages") | Out-Null
     }
     & $uvExe pip install --python $venvPython -r (Join-Path $root "requirements.txt")
     if ($LASTEXITCODE -ne 0) { throw "No se pudieron instalar las dependencias de AutoShorts." }
 }
-if (-not (Test-Path $venvPython)) { throw "Falta el Python local. Vuelve a ejecutar INSTALAR.bat sin opciones." }
+if (-not (Test-Path $venvPython)) { throw "Falta el Python portátil. Vuelve a ejecutar INSTALAR.bat sin opciones." }
 [IO.File]::WriteAllText($pythonRecord, $venvPython)
 Write-Host "Runtime: $venvPython"
 
