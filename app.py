@@ -9,6 +9,7 @@ import streamlit as st
 from autoshorts.production import (
     MediaValidationError,
     build_storyboard,
+    project_archive_bytes,
     save_media_manifest,
     set_project_status,
     sha256_bytes,
@@ -408,6 +409,14 @@ elif view == "outputs":
                 st.image(str(cover), width=220)
                 st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg", key=f"cover-{folder.name}")
             st.download_button("Descargar título, descripción y hashtags", publication.read_bytes(), publication.name, "text/plain", key=f"text-{folder.name}")
+            st.download_button(
+                "Descargar paquete completo ZIP",
+                project_archive_bytes(folder),
+                f"{folder.name}-entregables.zip",
+                "application/zip",
+                key=f"package-{folder.name}",
+                use_container_width=True,
+            )
 
 elif view == "identity":
     st.markdown('<h2 class="section-title">Identidad del proyecto</h2>', unsafe_allow_html=True)
