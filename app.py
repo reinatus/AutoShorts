@@ -6,6 +6,15 @@ from pathlib import Path
 
 import streamlit as st
 
+from autoshorts.production import (
+    MediaValidationError,
+    build_storyboard,
+    save_media_manifest,
+    set_project_status,
+    sha256_bytes,
+    validate_media_records,
+)
+
 from autoshorts.studio import (
     Niche,
     VideoIdea,
@@ -221,29 +230,116 @@ elif view == "generate":
             st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4")
             st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg")
     else:
-        st.warning("Falta incorporar metraje real específico para esta idea. Generar ahora produciría otro montaje genérico, justo lo que queremos evitar.")
-        uploaded = st.file_uploader("Añade los clips reales aprobados para esta producción", type=["mp4", "mov", "webm"], accept_multiple_files=True, key=f"clips-{idea.slug}")
-        ready = len(uploaded) >= 3
+        st.warning("Para evitar montajes genéricos, revisa cada clip y su función antes de renderizar.")
+        uploaded = st.file_uploader(
+            "Añade entre 3 y 12 clips reales aprobados",
+            type=["mp4", "mov", "webm"],
+            accept_multiple_files=True,
+            key=f"clips-{idea.slug}",
+        )
+        draft_records = []
+        for index, clip in enumerate(uploaded, 1):
+            payload = clip.getvalue()
+            with st.expander(f"Plano {index}: {Path(clip.name).name}", expanded=index <= 3):
+                st.video(payload)
+                source = st.text_input(
+                    "Fuente o propietario",
+                    value="Material propio / archivo local",
+                    key=f"source-{idea.slug}-{index}",
+                )
+                license_name = st.selectbox(
+                    "Licencia",
+                    ["Material propio", "Dominio público", "CC BY", "CC BY-SA", "Licencia comercial", "Otra: revisar"],
+                    key=f"license-{idea.slug}-{index}",
+                )
+                relevance = st.text_input(
+                    "Qué muestra y qué frase acompaña",
+                    placeholder="Ej.: primer plano real del animal moviendo los tentáculos",
+                    key=f"relevance-{idea.slug}-{index}",
+                )
+            draft_records.append(
+                {
+                    "filename": Path(clip.name).name,
+                    "size_bytes": len(payload),
+                    "sha256": sha256_bytes(payload),
+                    "source": source,
+                    "license": license_name,
+                    "relevance": relevance,
+                }
+            )
+
+        validation_error = ""
+        approved_records = []
         if uploaded:
-            st.caption(f"{len(uploaded)} clips añadidos. Se requieren al menos 3 planos diferentes.")
-        rights_ok = st.checkbox("Confirmo que puedo utilizar estos clips y que corresponden al tema del vídeo.", key=f"rights-{idea.slug}")
-        if st.button("▶  GENERAR VÍDEO CON ESTOS CLIPS", type="primary", use_container_width=True, disabled=blocked_budget or not ready or not rights_ok):
+            try:
+                approved_records = validate_media_records(draft_records)
+            except MediaValidationError as error:
+                validation_error = str(error)
+                st.error(validation_error)
+
+        storyboard = build_storyboard(script, idea.visual_hook, approved_records)
+        if storyboard:
+            st.markdown("#### Storyboard previo")
+            st.caption("Comprueba que cada plano corresponde con lo que se está contando. El primer plano debe sostener el gancho.")
+            st.dataframe(
+                [
+                    {
+                        "Escena": row["scene"],
+                        "Tiempo": f'{row["start"]:.1f}–{row["end"]:.1f} s',
+                        "Clip": row["clip"],
+                        "Función visual": row["purpose"],
+                        "Narración": row["narration"],
+                    }
+                    for row in storyboard
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        rights_ok = st.checkbox(
+            "Confirmo que las fuentes y licencias indicadas permiten utilizar estos clips.",
+            key=f"rights-{idea.slug}",
+        )
+        storyboard_ok = st.checkbox(
+            "He revisado el storyboard: ningún plano es genérico, repetido o ajeno a la narración.",
+            key=f"storyboard-{idea.slug}",
+        )
+        ready = bool(approved_records) and not validation_error and rights_ok and storyboard_ok
+        if uploaded:
+            st.caption(f"{len(uploaded)} clips añadidos · máximo 300 MB por clip · máximo 1 GB en total.")
+
+        if st.button(
+            "▶  GENERAR VÍDEO CON ESTE STORYBOARD",
+            type="primary",
+            use_container_width=True,
+            disabled=blocked_budget or not ready,
+        ):
             project = create_project(LIBRARY, idea, niche, script, cta_index)
             media = project / "media"
             media.mkdir(exist_ok=True)
             clip_paths = []
-            for index, clip in enumerate(uploaded, 1):
+            saved_records = []
+            for index, (clip, record) in enumerate(zip(uploaded, approved_records), 1):
                 clip_path = media / f"{index:02d}-{Path(clip.name).name}"
                 clip_path.write_bytes(clip.getvalue())
                 clip_paths.append(clip_path)
-            with st.spinner("Generando narración, subtítulos, montaje y portada en local…"):
-                video = render_uploaded_short(ROOT, project, clip_paths, script, niche.cta_variants[cta_index])
-                cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
-            st.session_state["last_project"] = str(project)
-            st.success("Vídeo final, narración, subtítulos, cierre, portada y textos terminados.")
-            st.video(str(video))
-            st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4", key=f"download-uploaded-{project.name}")
-            st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg", key=f"download-cover-{project.name}")
+                saved_records.append({**record, "original_filename": record["filename"], "filename": clip_path.name})
+            final_storyboard = build_storyboard(script, idea.visual_hook, saved_records)
+            save_media_manifest(project, saved_records, final_storyboard)
+            set_project_status(project, "rendering")
+            try:
+                with st.spinner("Generando narración, subtítulos, montaje y portada en local…"):
+                    video = render_uploaded_short(ROOT, project, clip_paths, script, niche.cta_variants[cta_index])
+                    cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
+            except Exception as error:
+                set_project_status(project, "failed", str(error))
+                st.error(f"El render se ha detenido sin perder el proyecto: {error}")
+            else:
+                st.session_state["last_project"] = str(project)
+                st.success("Vídeo final, narración, subtítulos, cierre, portada y textos terminados.")
+                st.video(str(video))
+                st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4", key=f"download-uploaded-{project.name}")
+                st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg", key=f"download-cover-{project.name}")
 
 elif view == "outputs":
     st.markdown('<h2 class="section-title">Entregables</h2>', unsafe_allow_html=True)
