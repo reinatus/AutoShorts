@@ -1,11 +1,15 @@
 from pathlib import Path
 
+import io
 import json
+import zipfile
+
 import pytest
 
 from autoshorts.production import (
     MediaValidationError,
     build_storyboard,
+    project_archive_bytes,
     save_media_manifest,
     set_project_status,
     sha256_bytes,
@@ -69,3 +73,16 @@ def test_manifest_and_status_are_persisted(tmp_path: Path):
     status = json.loads((project / "project.json").read_text(encoding="utf-8"))
     assert status["status"] == "failed"
     assert status["last_error"] == "fallo controlado"
+
+
+def test_delivery_zip_contains_only_final_assets(tmp_path: Path):
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "video-final.mp4").write_bytes(b"video")
+    (project / "portada-9x16.jpg").write_bytes(b"cover")
+    (project / "publicacion.txt").write_text("metadata", encoding="utf-8")
+    (project / "unrelated.tmp").write_text("ignore", encoding="utf-8")
+
+    payload = project_archive_bytes(project)
+    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+        assert set(archive.namelist()) == {"video-final.mp4", "portada-9x16.jpg", "publicacion.txt"}
