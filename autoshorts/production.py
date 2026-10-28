@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
@@ -124,3 +126,24 @@ def set_project_status(project: Path, status: str, error: str | None = None) -> 
     else:
         record.pop("last_error", None)
     record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+DELIVERY_FILES = (
+    "video-final.mp4",
+    "portada-9x16.jpg",
+    "guion.txt",
+    "publicacion.txt",
+    "project.json",
+    "media-manifest.json",
+    "subtitulos.ass",
+)
+
+
+def project_archive_bytes(project: Path) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for filename in DELIVERY_FILES:
+            path = project / filename
+            if path.is_file():
+                archive.write(path, arcname=filename)
+    return buffer.getvalue()
