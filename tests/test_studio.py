@@ -53,5 +53,7 @@ def test_uploaded_renderer_requires_visual_variety(tmp_path: Path):
 def test_subtitles_include_body_and_final_cta():
     subtitles = _ass_subtitles("Una explicación breve que se reparte en subtítulos legibles.", "¿Qué piensas?")
     assert "Style: Body" in subtitles
-    assert "0:00:36.50,0:00:40.00,CTA" in subtitles
+    assert "0:00:37.00,0:00:40.00,CTA" in subtitles
+    body_events = [line for line in subtitles.splitlines() if ",Body," in line]
+    assert all(len(line.rsplit(",", 1)[-1].split()) <= 5 for line in body_events)
     assert "¿Qué piensas?" in subtitles
