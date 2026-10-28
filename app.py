@@ -221,14 +221,20 @@ elif view == "generate":
         st.success("Todo el metraje, la narración y la plantilla están validados. Este vídeo puede generarse completamente en local.")
         if st.button("▶  GENERAR VÍDEO FINAL", type="primary", use_container_width=True, disabled=blocked_budget):
             project = create_project(LIBRARY, idea, niche, script, cta_index)
-            with st.spinner("Generando vídeo y portada en local…"):
-                video = render_octopus(ROOT, project, cta_index)
-                cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
-            st.session_state["last_project"] = str(project)
-            st.success("Vídeo final, portada y paquete de publicación terminados.")
-            st.video(str(video))
-            st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4")
-            st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg")
+            set_project_status(project, "rendering")
+            try:
+                with st.spinner("Generando vídeo y portada en local…"):
+                    video = render_octopus(ROOT, project, cta_index)
+                    cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
+            except Exception as error:
+                set_project_status(project, "failed", str(error))
+                st.error(f"El render se ha detenido sin perder el proyecto: {error}")
+            else:
+                st.session_state["last_project"] = str(project)
+                st.success("Vídeo final, portada y paquete de publicación terminados.")
+                st.video(str(video))
+                st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4")
+                st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg")
     else:
         st.warning("Para evitar montajes genéricos, revisa cada clip y su función antes de renderizar.")
         uploaded = st.file_uploader(
