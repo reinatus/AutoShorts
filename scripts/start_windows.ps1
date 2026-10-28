@@ -7,11 +7,11 @@ $runtime = Join-Path $root ".runtime"
 $pythonRecord = Join-Path $runtime "python-path.txt"
 $logs = Join-Path $root "logs"
 
-if (-not (Test-Path $pythonRecord)) { throw "AutoShorts no está instalado. Ejecuta INSTALAR.bat." }
+if (-not (Test-Path $pythonRecord)) { throw "AutoShorts no esta instalado. Ejecuta INSTALAR.bat." }
 $python = (Get-Content -LiteralPath $pythonRecord -Raw).Trim()
 if (-not (Test-Path $python)) { throw "El runtime registrado ya no existe. Ejecuta INSTALAR.bat." }
 & (Join-Path $PSScriptRoot "doctor.ps1") -Quiet
-if ($LASTEXITCODE -ne 0) { throw "La instalación está incompleta. Ejecuta DIAGNOSTICO.bat." }
+if ($LASTEXITCODE -ne 0) { throw "La instalacion esta incompleta. Ejecuta DIAGNOSTICO.bat." }
 
 while ($Port -le 8510) {
     $occupied = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
@@ -44,7 +44,7 @@ if (-not $ready) {
 }
 
 [IO.File]::WriteAllText((Join-Path $root ".runtime-port"), "$Port")
-Write-Host "AutoShorts está funcionando en $url" -ForegroundColor Green
+Write-Host "AutoShorts esta funcionando en $url" -ForegroundColor Green
 Write-Host "Deja esta ventana abierta. Pulsa Ctrl+C para detenerlo."
 if (-not $NoBrowser) { Start-Process $url }
 try { Wait-Process -Id $process.Id } finally {
