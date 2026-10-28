@@ -1,19 +1,19 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 cd /d "%~dp0"
-title AutoShorts
+title AutoShorts Studio
 
-if not exist ".venv\Scripts\python.exe" (
-  echo AutoShorts no esta instalado todavia.
-  echo Ejecutando instalador...
+if not exist ".runtime\python-path.txt" (
+  echo AutoShorts no esta instalado. Abriendo el instalador...
   call INSTALAR.bat
   if errorlevel 1 exit /b 1
 )
 
-echo Abriendo AutoShorts en el navegador...
-start "" http://localhost:8501
-".venv\Scripts\python.exe" -m streamlit run app.py --server.address 127.0.0.1 --server.port 8501
-
-echo.
-echo AutoShorts se ha detenido.
-pause
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start_windows.ps1"
+if errorlevel 1 (
+  echo.
+  echo [ERROR] AutoShorts no pudo arrancar.
+  echo Ejecuta DIAGNOSTICO.bat y revisa logs\autoshorts-error.log.
+  pause
+  exit /b 1
+)
