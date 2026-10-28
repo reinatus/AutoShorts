@@ -15,6 +15,12 @@ Actualizado: 28 de octubre de 2026.
 - Instalador Windows autocontenido con Python portatil, FFmpeg y Piper.
 - Diagnostico y arranque con espera activa antes de abrir el navegador.
 - Sin APIs de pago activadas por defecto.
+- Revision previa con vista de clips, funcion narrativa y storyboard de 40 segundos.
+- Validacion de formato, tamano, duplicados, fuentes y licencias.
+- Manifiesto de medios guardado junto a cada produccion.
+- Estado de render, conservacion de errores y reintento desde Entregables.
+- Descarga ZIP con video, portada, guion, publicacion, storyboard y licencias.
+- Subtitulos de bloques mas cortos y margenes seguros reforzados.
 
 ## Verificado
 
@@ -30,12 +36,12 @@ No se afirma como probado un render completo de cada idea del banco ni todos los
 
 1. **Probar de extremo a extremo varios videos nuevos.** Renderizar, revisar y aprobar al menos tres Shorts de tematicas distintas desde el panel, incluyendo descarga del paquete final.
 2. **Biblioteca visual por idea.** Preparar material real especifico, sin repeticiones ni planos genericos, para cada idea prioritaria. Ahora solo el pulpo tiene una ruta curada propia.
-3. **Seleccion y derechos del material.** Guardar fuente, licencia y atribucion de cada clip dentro del proyecto antes de permitir publicar.
-4. **Revision visual asistida.** Mostrar storyboard y clips elegidos antes del render para sustituir planos incorrectos sin rehacer todo.
-5. **Subtitulos y zonas seguras.** Validar posiciones y tamanos en YouTube Shorts, TikTok e Instagram con ejemplos reales.
+3. **Auditar los derechos registrados.** El panel ya obliga a guardar fuente, licencia y funcion de cada clip; falta comprobar manualmente que la informacion aportada sea correcta.
+4. **Edicion visual mas profunda.** La vista previa y el storyboard ya existen; falta recortar cada clip, cambiar su orden mediante controles y sustituir planos dentro de un proyecto ya guardado.
+5. **Validacion multiplataforma.** Los subtitulos ya son mas cortos y usan margenes mayores; falta comprobarlos con publicaciones de prueba en YouTube Shorts, TikTok e Instagram.
 6. **Calidad de voz.** Ajustar ritmo, pausas, pronunciaciones y normalizacion; Piper funciona, pero la voz sigue siendo sintetica.
 7. **Plantillas por identidad.** Convertir colores, tipografias, ritmo, gancho y cierre de cada proyecto en plantillas de render completas, no solo metadatos.
-8. **Cola fiable de render.** Cancelar, reintentar, recuperar fallos y limpiar temporales desde el panel.
+8. **Cola fiable de render.** Ya se conservan los fallos y se puede reintentar; falta cancelar un render activo, mostrar progreso y limpiar temporales desde el panel.
 9. **Pruebas Windows adicionales.** Validar Windows 10 y 11 en un equipo sin Python, con antivirus/SmartScreen y con el puerto 8501 ocupado.
 10. **Version descargable estable.** Publicar una version etiquetada o instalador firmado. Por ahora la descarga es un ZIP de la rama funcional.
 
