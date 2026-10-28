@@ -21,3 +21,8 @@ __pycache__/
 output/
 tasks/
 studio_data/
+.runtime/
+logs/
+.runtime-port
+dist/
+.package/
