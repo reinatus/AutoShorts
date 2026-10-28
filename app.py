@@ -360,11 +360,47 @@ elif view == "outputs":
     for folder, record in folders:
         with st.expander(record["idea"]["title"], expanded=folder == folders[0][0]):
             pub = record["publication"]
-            st.caption(folder.name)
+            status = record.get("status", "sin_estado")
+            st.caption(f"{folder.name} · estado: {status}")
+            if status == "failed":
+                st.error(record.get("last_error", "El render anterior no terminó."))
+            elif status == "rendering":
+                st.warning("Este proyecto quedó marcado como renderizando. Puedes reintentarlo si el proceso ya no está activo.")
             st.write(f"**Título:** {pub['title']}")
             st.write(pub["description"])
             st.code(" ".join(pub["hashtags"]), language=None)
             video, cover, publication = folder / "video-final.mp4", folder / "portada-9x16.jpg", folder / "publicacion.txt"
+            manifest = folder / "media-manifest.json"
+            if manifest.exists():
+                with st.expander("Fuentes, licencias y storyboard"):
+                    manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+                    for item in manifest_data.get("clips", []):
+                        st.write(f"**{item['filename']}** · {item['license']}  \\n{item['source']} — {item['relevance']}")
+                    st.download_button(
+                        "Descargar manifiesto",
+                        manifest.read_bytes(),
+                        manifest.name,
+                        "application/json",
+                        key=f"manifest-{folder.name}",
+                    )
+            if status in {"failed", "rendering"}:
+                if st.button("Reintentar render", key=f"retry-{folder.name}", use_container_width=True):
+                    set_project_status(folder, "rendering")
+                    try:
+                        if record.get("idea", {}).get("renderer") == "octopus":
+                            cta_value = pub.get("cta", "")
+                            retry_cta = niche.cta_variants.index(cta_value) if cta_value in niche.cta_variants else 0
+                            retry_video = render_octopus(ROOT, folder, retry_cta)
+                        else:
+                            retry_clips = sorted((folder / "media").glob("*"))
+                            retry_video = render_uploaded_short(ROOT, folder, retry_clips, record.get("script", ""), pub.get("cta", ""))
+                        create_cover(ROOT, retry_video, cover)
+                    except Exception as error:
+                        set_project_status(folder, "failed", str(error))
+                        st.error(f"No se pudo completar el reintento: {error}")
+                    else:
+                        st.success("Render recuperado correctamente.")
+                        st.rerun()
             if video.exists():
                 st.video(str(video))
                 st.download_button("Descargar MP4", video.read_bytes(), video.name, "video/mp4", key=f"video-{folder.name}")
