@@ -278,8 +278,8 @@ def _ass_escape(value: str) -> str:
 
 def _ass_subtitles(script: str, cta: str) -> str:
     words = script.replace("\n", " ").split()
-    chunks = [" ".join(words[index:index + 7]) for index in range(0, len(words), 7)] or [""]
-    usable = 36.5
+    chunks = [" ".join(words[index:index + 5]) for index in range(0, len(words), 5)] or [""]
+    usable = 37.0
     total_words = max(1, sum(len(chunk.split()) for chunk in chunks))
     cursor = 0.0
     events = []
@@ -288,13 +288,13 @@ def _ass_subtitles(script: str, cta: str) -> str:
         end = min(usable, cursor + duration)
         events.append(f"Dialogue: 0,{_ass_time(cursor)},{_ass_time(end)},Body,,0,0,0,,{_ass_escape(chunk)}")
         cursor = end
-    events.append(f"Dialogue: 1,0:00:36.50,0:00:40.00,CTA,,0,0,0,,{_ass_escape(cta)}")
+    events.append(f"Dialogue: 1,0:00:37.00,0:00:40.00,CTA,,0,0,0,,{_ass_escape(cta)}")
     return "\n".join([
         "[Script Info]", "ScriptType: v4.00+", "PlayResX: 1080", "PlayResY: 1920", "WrapStyle: 2", "ScaledBorderAndShadow: yes", "",
         "[V4+ Styles]",
         "Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding",
-        "Style: Body,Arial,58,&H00FFFFFF,&H000000FF,&H00101010,&H70000000,-1,0,0,0,100,100,0,0,1,5,1,2,90,90,245,1",
-        "Style: CTA,Arial,70,&H0047D4FF,&H000000FF,&H00101010,&H78000000,-1,0,0,0,100,100,0,0,1,6,1,5,100,100,500,1", "",
+        "Style: Body,Arial,64,&H00FFFFFF,&H000000FF,&H00101010,&H70000000,-1,0,0,0,100,100,0,0,1,5,1,2,110,110,300,1",
+        "Style: CTA,Arial,54,&H0047D4FF,&H000000FF,&H00101010,&H78000000,-1,0,0,0,100,100,0,0,1,5,1,2,120,120,420,1", "",
         "[Events]", "Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text", *events, "",
     ])
 
