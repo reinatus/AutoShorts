@@ -57,7 +57,7 @@ if (-not $SkipPythonPackages) {
         Expand-Archive -LiteralPath $pythonZip -DestinationPath $pythonRoot -Force
         $pth = Join-Path $pythonRoot "python311._pth"
         $pthContent = Get-Content -LiteralPath $pth -Raw
-        $pthContent = $pthContent -replace "#import site", "Lib\\site-packages`r`nimport site"
+        $pthContent = $pthContent -replace "#import site", "Lib\\site-packages`r`n..\\..`r`nimport site"
         [IO.File]::WriteAllText($pth, $pthContent)
         New-Item -ItemType Directory -Force -Path (Join-Path $pythonRoot "Lib\site-packages") | Out-Null
     }
