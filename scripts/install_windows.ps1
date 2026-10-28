@@ -24,7 +24,7 @@ function Get-Download([string]$Uri, [string]$Destination, [string]$Sha256) {
     $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $Destination).Hash.ToLowerInvariant()
     if ($actual -ne $Sha256) {
         Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
-        throw "La descarga no superó la verificación SHA-256: $Uri"
+        throw "La descarga no supero la verificacion SHA-256: $Uri"
     }
 }
 
@@ -39,7 +39,7 @@ if (-not (Test-Path $uvExe)) {
     New-Item -ItemType Directory -Force -Path $uvRoot | Out-Null
     Expand-Archive -LiteralPath $uvZip -DestinationPath $uvRoot -Force
     $foundUv = Get-ChildItem $uvRoot -Filter "uv.exe" -Recurse | Select-Object -First 1
-    if (-not $foundUv) { throw "No se encontró uv.exe dentro del paquete descargado." }
+    if (-not $foundUv) { throw "No se encontro uv.exe dentro del paquete descargado." }
     if ($foundUv.FullName -ne $uvExe) { Copy-Item -LiteralPath $foundUv.FullName -Destination $uvExe -Force }
 }
 
@@ -49,7 +49,7 @@ $pythonRoot = Join-Path $runtime "python-embed"
 $venvPython = Join-Path $pythonRoot "python.exe"
 
 if (-not $SkipPythonPackages) {
-    Write-Step "Instalando Python portátil y dependencias"
+    Write-Step "Instalando Python portatil y dependencias"
     if (-not (Test-Path $venvPython)) {
         $pythonZip = Join-Path $cache "python-3.11.9-embed-amd64.zip"
         Get-Download "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip" $pythonZip "009d6bf7e3b2ddca3d784fa09f90fe54336d5b60f0e0f305c37f400bf83cfd3b"
@@ -64,7 +64,7 @@ if (-not $SkipPythonPackages) {
     & $uvExe pip install --python $venvPython -r (Join-Path $root "requirements.txt")
     if ($LASTEXITCODE -ne 0) { throw "No se pudieron instalar las dependencias de AutoShorts." }
 }
-if (-not (Test-Path $venvPython)) { throw "Falta el Python portátil. Vuelve a ejecutar INSTALAR.bat sin opciones." }
+if (-not (Test-Path $venvPython)) { throw "Falta el Python portatil. Vuelve a ejecutar INSTALAR.bat sin opciones." }
 [IO.File]::WriteAllText($pythonRecord, $venvPython)
 Write-Host "Runtime: $venvPython"
 
@@ -80,7 +80,7 @@ if (-not $SkipVideoTools) {
         if ($LASTEXITCODE -ne 0) { throw "No se pudo extraer FFmpeg." }
     }
 
-    Write-Step "Instalando la narración local Piper"
+    Write-Step "Instalando la narracion local Piper"
     $piperRoot = Join-Path $toolsDir "piper"
     $piperExe = Join-Path $piperRoot "piper\piper.exe"
     if (-not (Test-Path $piperExe)) {
@@ -94,8 +94,8 @@ if (-not $SkipVideoTools) {
     Get-Download "$voiceBase/es_ES-sharvard-medium.onnx.json" (Join-Path $piperRoot "es_ES-sharvard-medium.onnx.json") "7438c9b699c72b0c3388dae1b68d3f364dc66a2150fe554a1c11f03372957b2c"
 }
 
-Write-Step "Verificando la instalación"
+Write-Step "Verificando la instalacion"
 & (Join-Path $PSScriptRoot "doctor.ps1") -Quiet
-if ($LASTEXITCODE -ne 0) { throw "La verificación final encontró errores." }
-Write-Host "`nAutoShorts está instalado correctamente." -ForegroundColor Green
+if ($LASTEXITCODE -ne 0) { throw "La verificacion final encontro errores." }
+Write-Host "`nAutoShorts esta instalado correctamente." -ForegroundColor Green
 Write-Host "Ejecuta INICIAR.bat para abrirlo."
