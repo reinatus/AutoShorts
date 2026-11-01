@@ -23,22 +23,20 @@ Si falla, ejecuta **DIAGNOSTICO.bat**. Consulta tambien [la guia detallada](DESC
 - identidad editorial por proyecto;
 - presupuesto maximo configurable, con limite objetivo de 0,50 USD;
 - generador del documental del pulpo;
-- generador de 40 segundos para otras ideas cuando se aportan al menos tres clips reales;
+- producción automática de 40 segundos: guion, búsqueda y descarga de clips libres, licencias, storyboard, voz, subtítulos, montaje y portada;
 - narracion local, subtitulos, gancho, cierre y CTA;
 - portada vertical;
 - titulo, descripcion, hashtags, palabras clave y lista de publicacion;
-- revisión previa de clips y storyboard antes de renderizar;
-- registro obligatorio de fuentes y licencias;
-- recuperación y reintento de renders fallidos;
-- paquete ZIP descargable con todos los entregables;
+- paquete descargable de entregables;
 - arranque local sin MoneyPrinterTurbo y sin servicios de pago obligatorios.
 
-## Limites actuales
+## Límites actuales
 
-No todas las ideas tienen aun una seleccion visual automatica y especifica. El sistema puede montar videos desde clips aprobados, pero todavia no sustituye la revision editorial humana ni garantiza viralidad. La generacion opcional mediante IA de video sigue desactivada hasta que se autorice un proveedor y un presupuesto.
+La ruta automática gratuita busca vídeos reales en Wikimedia Commons y se detiene si no encuentra al menos tres clips relacionados y documentados. No rellena el montaje con imágenes genéricas. La disponibilidad y calidad dependen del archivo libre existente para cada tema; todavía no sustituye una revisión editorial final ni garantiza viralidad. La generación opcional mediante IA de vídeo sigue desactivada hasta que se autorice un proveedor y un presupuesto.
 
 Consulta [Estado del sistema y trabajo pendiente](docs/ESTADO_DEL_SISTEMA.md) para el inventario exacto de lo terminado, lo validado y lo que falta.
 
 ## Uso responsable del material
 
-Utiliza clips propios o con licencia compatible. AutoShorts no concede derechos sobre los videos que se carguen o descarguen desde fuentes externas.
+Cada producción guarda un manifiesto con la página de origen, autor y licencia informados por Wikimedia Commons. Revisa ese manifiesto antes de publicar: AutoShorts automatiza la trazabilidad, pero no concede derechos adicionales sobre los vídeos externos.
+
