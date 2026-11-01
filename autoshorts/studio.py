@@ -261,7 +261,21 @@ def _detect_content_crop(ffmpeg: Path, clip: Path, cwd: Path) -> str:
 def create_cover(repo_root: Path, video: Path, output: Path, second: float = 1.0) -> Path:
     ffmpeg = next((repo_root / ".tools").rglob("ffmpeg*.exe"), None)
     if not ffmpeg: raise FileNotFoundError("FFmpeg no está instalado en .tools.")
-    completed = subprocess.run([str(ffmpeg), "-y", "-hide_banner", "-loglevel", "error", "-ss", str(second), "-i", str(video), "-frames:v", "1", "-vf", "scale=2160:3840:flags=lanczos", str(output)], cwd=repo_root, capture_output=True, text=True, timeout=120)
+    source = video
+    manifest = video.parent / "media-manifest.json"
+    if manifest.exists():
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+            first_clip = data.get("storyboard", [{}])[0].get("clip", "")
+            candidate = video.parent / "media" / first_clip
+            if candidate.is_file():
+                source = candidate
+        except (json.JSONDecodeError, IndexError, OSError):
+            pass
+    detected_crop = _detect_content_crop(ffmpeg, source, repo_root)
+    crop_prefix = f"crop={detected_crop}," if detected_crop else ""
+    cover_filter = f"{crop_prefix}scale=2160:3840:force_original_aspect_ratio=increase,crop=2160:3840,setsar=1"
+    completed = subprocess.run([str(ffmpeg), "-y", "-hide_banner", "-loglevel", "error", "-ss", str(second), "-i", str(source), "-frames:v", "1", "-vf", cover_filter, str(output)], cwd=repo_root, capture_output=True, text=True, timeout=120)
     if completed.returncode != 0 or not output.exists(): raise RuntimeError((completed.stderr or "No se pudo generar la portada.").strip())
     _style_cover(output, video.parent / "project.json")
     return output
