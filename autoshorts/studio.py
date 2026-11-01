@@ -224,10 +224,12 @@ def render_uploaded_short(repo_root: Path, project: Path, clips: list[Path], scr
         command += ["-stream_loop", "-1", "-i", str(clip)]
     command += ["-i", str(narration)]
     filters = []
-    for index in range(len(clips)):
+    for index, clip in enumerate(clips):
+        detected_crop = _detect_content_crop(ffmpeg, clip, repo_root)
+        crop_prefix = f"crop={detected_crop}," if detected_crop else ""
         filters.append(
-            f"[{index}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
-            f"crop=1080:1920,fps=30,trim=duration={segment_duration:.3f},setpts=PTS-STARTPTS[v{index}]"
+            f"[{index}:v]{crop_prefix}scale=1080:1920:force_original_aspect_ratio=increase,"
+            f"crop=1080:1920,setsar=1,fps=30,trim=duration={segment_duration:.3f},setpts=PTS-STARTPTS[v{index}]"
         )
     joined = "".join(f"[v{index}]" for index in range(len(clips)))
     ass_path = str(subtitles).replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
@@ -246,12 +248,63 @@ def render_uploaded_short(repo_root: Path, project: Path, clips: list[Path], scr
     return output
 
 
+def _detect_content_crop(ffmpeg: Path, clip: Path, cwd: Path) -> str:
+    """Detect embedded letterboxing so automatic clips fill a vertical frame."""
+    completed = subprocess.run(
+        [str(ffmpeg), "-hide_banner", "-ss", "0.5", "-i", str(clip), "-t", "2", "-vf", "cropdetect=24:16:0", "-f", "null", "NUL"],
+        cwd=cwd, capture_output=True, text=True, timeout=45,
+    )
+    matches = re.findall(r"crop=(\d+:\d+:\d+:\d+)", completed.stderr or "")
+    return matches[-1] if matches else ""
+
+
 def create_cover(repo_root: Path, video: Path, output: Path, second: float = 1.0) -> Path:
     ffmpeg = next((repo_root / ".tools").rglob("ffmpeg*.exe"), None)
     if not ffmpeg: raise FileNotFoundError("FFmpeg no está instalado en .tools.")
     completed = subprocess.run([str(ffmpeg), "-y", "-hide_banner", "-loglevel", "error", "-ss", str(second), "-i", str(video), "-frames:v", "1", "-vf", "scale=2160:3840:flags=lanczos", str(output)], cwd=repo_root, capture_output=True, text=True, timeout=120)
     if completed.returncode != 0 or not output.exists(): raise RuntimeError((completed.stderr or "No se pudo generar la portada.").strip())
+    _style_cover(output, video.parent / "project.json")
     return output
+
+
+def _style_cover(output: Path, project_record: Path) -> None:
+    """Turn the opening frame into a readable, safe-area thumbnail automatically."""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+
+        record = json.loads(project_record.read_text(encoding="utf-8")) if project_record.exists() else {}
+        headline = record.get("publication", {}).get("thumbnail", {}).get("headline", "")
+        accent = record.get("niche", {}).get("primary_color", "#FFD447")
+        if not headline:
+            return
+        image = Image.open(output).convert("RGB")
+        overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
+        draw.rounded_rectangle((130, 180, image.width - 130, 1320), radius=70, fill=(4, 7, 12, 205))
+        font_path = Path("C:/Windows/Fonts/arialbd.ttf")
+        font = ImageFont.truetype(str(font_path), 190) if font_path.exists() else ImageFont.load_default()
+        words = headline.split()
+        lines: list[str] = []
+        current = ""
+        for word in words:
+            trial = f"{current} {word}".strip()
+            if current and draw.textbbox((0, 0), trial, font=font)[2] > image.width - 360:
+                lines.append(current)
+                current = word
+            else:
+                current = trial
+        if current:
+            lines.append(current)
+        y = 300
+        for line in lines[:4]:
+            box = draw.textbbox((0, 0), line, font=font, stroke_width=8)
+            x = (image.width - (box[2] - box[0])) // 2
+            draw.text((x, y), line, font=font, fill=accent, stroke_width=8, stroke_fill="#05070A")
+            y += 225
+        Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB").save(output, "JPEG", quality=94, optimize=True)
+    except Exception:
+        # A usable frame is still preferable to failing an otherwise complete production.
+        return
 
 
 def list_projects(root: Path) -> Iterable[Path]:
@@ -317,3 +370,4 @@ def _mark_rendered(project: Path) -> None:
     record["status"] = "rendered"
     record["rendered_at"] = datetime.now(timezone.utc).isoformat()
     _write_json(record_path, record)
+
