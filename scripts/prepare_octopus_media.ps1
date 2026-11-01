@@ -11,10 +11,15 @@ $downloads = @(
     @("https://commons.wikimedia.org/wiki/Special:Redirect/file/Sealife-Munich-Octopus.ogv", (Join-Path $media "sealife_octopus.ogv"))
 )
 
+$userAgent = "AutoShorts/1.0 (local educational video tool; https://github.com/reinatus/AutoShorts)"
 foreach ($item in $downloads) {
     if (-not (Test-Path $item[1])) {
         Write-Host "Descargando $($item[1])"
-        Invoke-WebRequest -UseBasicParsing -Uri $item[0] -OutFile $item[1]
+        & curl.exe --fail --location --retry 5 --retry-all-errors --retry-delay 3 --user-agent $userAgent --output $item[1] $item[0]
+        if ($LASTEXITCODE -ne 0) {
+            Remove-Item -LiteralPath $item[1] -Force -ErrorAction SilentlyContinue
+            throw "No se pudo descargar $($item[0])"
+        }
     }
 }
 
