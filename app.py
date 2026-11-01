@@ -6,6 +6,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from autoshorts.automatic import automatic_script, produce_automatic_short
+
 from autoshorts.production import (
     MediaValidationError,
     build_storyboard,
@@ -171,10 +173,10 @@ elif view == "videos":
     for start in range(0, len(filtered), 2):
         cols = st.columns(2)
         for col, idea in zip(cols, filtered[start:start + 2]):
-            render_state = "Render completo disponible" if idea.renderer != "pending" else "Requiere metraje real"
+            render_state = "Producción automática"
             with col:
                 st.markdown(
-                    f'<div class="video-card" style="--project-color:{niche.primary_color}"><div class="video-top"><span class="number">VIDEO {niche_ideas.index(idea)+1:02d}</span><span class="score">{idea.viral_score}/100</span></div><h3>{html.escape(idea.title)}</h3><div class="hook">“{html.escape(idea.hook)}”</div><div class="visual"><b>APERTURA:</b> {html.escape(idea.visual_hook)}</div><div class="meta"><span class="tag">{idea.visual_difficulty}</span><span class="tag">${idea.estimated_cost_usd:.2f}</span><span class="tag">{render_state}</span></div></div>',
+                    f'<div class="video-card" style="--project-color:{niche.primary_color}"><div class="video-top"><span class="number">VIDEO {niche_ideas.index(idea)+1:02d}</span><span class="score">{idea.viral_score}/100</span></div><h3>{html.escape(idea.title)}</h3><div class="hook">“{html.escape(idea.hook)}”</div><div class="visual"><b>APERTURA:</b> {html.escape(idea.visual_hook)}</div><div class="meta"><span class="tag">{idea.visual_difficulty}</span><span class="tag">$0 automático</span><span class="tag">{render_state}</span></div></div>',
                     unsafe_allow_html=True,
                 )
                 st.button("Generar este vídeo →", key=f"generate-{idea.slug}", type="primary", use_container_width=True, on_click=open_generator, args=(idea,))
@@ -208,19 +210,21 @@ elif view == "generate":
         f'<div class="brief" style="--project-color:{niche.primary_color}"><div class="brief-kicker">BRIEF DE PRODUCCIÓN</div><h3>{html.escape(idea.hook)}</h3><p><b>Primer plano:</b> {html.escape(idea.visual_hook)}</p><p><b>Dirección:</b> {html.escape(idea.angle)}</p></div>',
         unsafe_allow_html=True,
     )
-    default_script = (ROOT / "real_media" / "octopus" / "narracion.txt").read_text(encoding="utf-8") if idea.renderer == "octopus" else f"{idea.hook}\n\n{idea.angle}\n\n[Cierre potente seguido de una invitación breve a comentar.]"
-    script = st.text_area("Guion", default_script, height=220, key=f"script-{idea.slug}")
+    script = (ROOT / "real_media" / "octopus" / "narracion.txt").read_text(encoding="utf-8") if idea.renderer == "octopus" else automatic_script(idea, niche)
+    with st.expander("Ver guion que se generará automáticamente"):
+        st.write(script)
     cta_index = st.selectbox("Cierre e interacción", range(len(niche.cta_variants)), format_func=lambda index: niche.cta_variants[index], key=f"cta-{niche.slug}")
     b1, b2, b3 = st.columns(3)
     b1.metric("Duración", "40 s")
-    b2.metric("Coste previsto", f"${idea.estimated_cost_usd:.2f}")
+    b2.metric("Coste previsto", "$0.00")
     b3.metric("Límite", f"${max_cost:.2f}")
-    blocked_budget = idea.estimated_cost_usd > max_cost
+    blocked_budget = 0.0 > max_cost
     if blocked_budget:
         st.error("Producción bloqueada: supera el límite configurado.")
-    if idea.renderer == "octopus":
-        st.success("Todo el metraje, la narración y la plantilla están validados. Este vídeo puede generarse completamente en local.")
-        if st.button("▶  GENERAR VÍDEO FINAL", type="primary", use_container_width=True, disabled=blocked_budget):
+    st.success("Producción automática: guion, clips libres, licencias, narración, subtítulos, montaje, portada y textos.")
+    st.caption("El sistema usa Wikimedia Commons y herramientas locales. Si no encuentra metraje suficientemente relacionado, se detiene en vez de rellenar con planos genéricos.")
+    if st.button("▶  CREAR VÍDEO COMPLETO AUTOMÁTICAMENTE", type="primary", use_container_width=True, disabled=blocked_budget):
+        if idea.renderer == "octopus":
             project = create_project(LIBRARY, idea, niche, script, cta_index)
             set_project_status(project, "rendering")
             try:
@@ -236,116 +240,17 @@ elif view == "generate":
                 st.video(str(video))
                 st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4")
                 st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg")
-    else:
-        st.warning("Para evitar montajes genéricos, revisa cada clip y su función antes de renderizar.")
-        uploaded = st.file_uploader(
-            "Añade entre 3 y 12 clips reales aprobados",
-            type=["mp4", "mov", "webm"],
-            accept_multiple_files=True,
-            key=f"clips-{idea.slug}",
-        )
-        draft_records = []
-        for index, clip in enumerate(uploaded, 1):
-            payload = clip.getvalue()
-            with st.expander(f"Plano {index}: {Path(clip.name).name}", expanded=index <= 3):
-                st.video(payload)
-                source = st.text_input(
-                    "Fuente o propietario",
-                    value="Material propio / archivo local",
-                    key=f"source-{idea.slug}-{index}",
-                )
-                license_name = st.selectbox(
-                    "Licencia",
-                    ["Material propio", "Dominio público", "CC BY", "CC BY-SA", "Licencia comercial", "Otra: revisar"],
-                    key=f"license-{idea.slug}-{index}",
-                )
-                relevance = st.text_input(
-                    "Qué muestra y qué frase acompaña",
-                    placeholder="Ej.: primer plano real del animal moviendo los tentáculos",
-                    key=f"relevance-{idea.slug}-{index}",
-                )
-            draft_records.append(
-                {
-                    "filename": Path(clip.name).name,
-                    "size_bytes": len(payload),
-                    "sha256": sha256_bytes(payload),
-                    "source": source,
-                    "license": license_name,
-                    "relevance": relevance,
-                }
-            )
-
-        validation_error = ""
-        approved_records = []
-        if uploaded:
+        else:
             try:
-                approved_records = validate_media_records(draft_records)
-            except MediaValidationError as error:
-                validation_error = str(error)
-                st.error(validation_error)
-
-        storyboard = build_storyboard(script, idea.visual_hook, approved_records)
-        if storyboard:
-            st.markdown("#### Storyboard previo")
-            st.caption("Comprueba que cada plano corresponde con lo que se está contando. El primer plano debe sostener el gancho.")
-            st.dataframe(
-                [
-                    {
-                        "Escena": row["scene"],
-                        "Tiempo": f'{row["start"]:.1f}–{row["end"]:.1f} s',
-                        "Clip": row["clip"],
-                        "Función visual": row["purpose"],
-                        "Narración": row["narration"],
-                    }
-                    for row in storyboard
-                ],
-                use_container_width=True,
-                hide_index=True,
-            )
-
-        rights_ok = st.checkbox(
-            "Confirmo que las fuentes y licencias indicadas permiten utilizar estos clips.",
-            key=f"rights-{idea.slug}",
-        )
-        storyboard_ok = st.checkbox(
-            "He revisado el storyboard: ningún plano es genérico, repetido o ajeno a la narración.",
-            key=f"storyboard-{idea.slug}",
-        )
-        ready = bool(approved_records) and not validation_error and rights_ok and storyboard_ok
-        if uploaded:
-            st.caption(f"{len(uploaded)} clips añadidos · máximo 300 MB por clip · máximo 1 GB en total.")
-
-        if st.button(
-            "▶  GENERAR VÍDEO CON ESTE STORYBOARD",
-            type="primary",
-            use_container_width=True,
-            disabled=blocked_budget or not ready,
-        ):
-            project = create_project(LIBRARY, idea, niche, script, cta_index)
-            media = project / "media"
-            media.mkdir(exist_ok=True)
-            clip_paths = []
-            saved_records = []
-            for index, (clip, record) in enumerate(zip(uploaded, approved_records), 1):
-                clip_path = media / f"{index:02d}-{Path(clip.name).name}"
-                clip_path.write_bytes(clip.getvalue())
-                clip_paths.append(clip_path)
-                saved_records.append({**record, "original_filename": record["filename"], "filename": clip_path.name})
-            final_storyboard = build_storyboard(script, idea.visual_hook, saved_records)
-            save_media_manifest(project, saved_records, final_storyboard)
-            set_project_status(project, "rendering")
-            try:
-                with st.spinner("Generando narración, subtítulos, montaje y portada en local…"):
-                    video = render_uploaded_short(ROOT, project, clip_paths, script, niche.cta_variants[cta_index])
-                    cover = create_cover(ROOT, video, project / "portada-9x16.jpg")
+                with st.spinner("Buscando clips específicos, verificando licencias y generando el vídeo completo…"):
+                    project, video, cover = produce_automatic_short(ROOT, LIBRARY, idea, niche, cta_index)
             except Exception as error:
-                set_project_status(project, "failed", str(error))
-                st.error(f"El render se ha detenido sin perder el proyecto: {error}")
+                st.error(f"La producción automática se ha detenido sin usar imágenes genéricas: {error}")
             else:
                 st.session_state["last_project"] = str(project)
-                st.success("Vídeo final, narración, subtítulos, cierre, portada y textos terminados.")
+                st.success("Producción automática terminada: vídeo, fuentes, licencias, portada y publicación.")
                 st.video(str(video))
-                st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4", key=f"download-uploaded-{project.name}")
+                st.download_button("Descargar vídeo", video.read_bytes(), video.name, "video/mp4", key=f"download-auto-{project.name}")
                 st.download_button("Descargar portada", cover.read_bytes(), cover.name, "image/jpeg", key=f"download-cover-{project.name}")
 
 elif view == "outputs":
@@ -429,3 +334,4 @@ elif view == "identity":
     right.color_picker("Color del proyecto", niche.primary_color, disabled=True)
 
 st.caption("AutoShorts funciona en local. El panel nunca activa proveedores de pago sin autorización.")
+
