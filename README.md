@@ -1,68 +1,42 @@
-# AutoShorts
+# AutoShorts Studio
 
-Fábrica de vídeos verticales 9:16 construida sobre MoneyPrinterTurbo.
+Herramienta local para organizar varios canales o nichos, mantener un banco de ideas por proyecto y crear Shorts verticales con material real, narracion, subtitulos, cierre, portada y textos de publicacion.
 
-## Objetivo
+## Descargar e instalar en Windows
 
-Convertir un canal/preset en una cola de Shorts: idea → hook → guion → storyboard → términos visuales → MoneyPrinterTurbo → MP4.
+[Descargar AutoShorts en ZIP](https://github.com/reinatus/AutoShorts/archive/refs/heads/feat/godot-procedural-pilot.zip)
 
-La V1 incluye:
+1. Descarga el ZIP y pulsa **Extraer todo**.
+2. Abre la carpeta extraida.
+3. Ejecuta **INSTALAR.bat** una sola vez.
+4. Ejecuta **INICIAR.bat** cada vez que quieras abrir AutoShorts.
 
-- Presets de canal persistentes en JSON.
-- Canal inicial `lugares-extranos`.
-- Storyboard estructurado de 8 escenas.
-- Generación de prompts pensados para evitar material genérico.
-- Adaptador HTTP para MoneyPrinterTurbo (`POST /api/v1/videos`).
-- Cola de trabajos y estado local.
-- UI Streamlit sencilla para crear lotes.
-- 1080×1920, subtítulos dinámicos y matching de materiales con guion.
+El instalador descarga dentro de la propia carpeta un Python portatil, las dependencias, FFmpeg, Piper y una voz espanola. No exige instalar Python manualmente y no activa APIs de pago. La primera instalacion necesita Internet, descarga aproximadamente 250 MB y puede ocupar cerca de 1 GB al terminar.
 
-## Arquitectura
+Si falla, ejecuta **DIAGNOSTICO.bat**. Consulta tambien [la guia detallada](DESCARGAR_E_INSTALAR.md).
 
-AutoShorts no sustituye el renderizador. MoneyPrinterTurbo sigue haciendo TTS, búsqueda de material, subtítulos y montaje. AutoShorts añade la capa editorial y de producción masiva.
+## Que incluye ahora
 
-```text
-Canal
-  ↓
-Tema / ideas
-  ↓
-Director editorial
-  ↓
-Hook + guion + storyboard
-  ↓
-Términos visuales por escena
-  ↓
-MoneyPrinterTurbo API
-  ↓
-MP4 1080x1920
-```
+- cartera con varios proyectos o nichos independientes;
+- panel propio para cada proyecto;
+- banco de ideas concretas de videos;
+- identidad editorial por proyecto;
+- presupuesto maximo configurable, con limite objetivo de 0,50 USD;
+- generador del documental del pulpo;
+- producción automática de 40 segundos: guion, búsqueda y descarga de clips libres, licencias, storyboard, voz, subtítulos, montaje y portada;
+- narracion local, subtitulos, gancho, cierre y CTA;
+- portada vertical;
+- titulo, descripcion, hashtags, palabras clave y lista de publicacion;
+- paquete descargable de entregables;
+- arranque local sin MoneyPrinterTurbo y sin servicios de pago obligatorios.
 
-## Arranque
+## Límites actuales
 
-1. Arranca MoneyPrinterTurbo y deja su API disponible en `http://127.0.0.1:8080`.
-2. Copia `.env.example` a `.env` y configura las claves que quieras usar.
-3. Instala dependencias:
+La ruta automática gratuita busca vídeos reales en Wikimedia Commons y se detiene si no encuentra al menos tres clips relacionados y documentados. No rellena el montaje con imágenes genéricas. La disponibilidad y calidad dependen del archivo libre existente para cada tema; todavía no sustituye una revisión editorial final ni garantiza viralidad. La generación opcional mediante IA de vídeo sigue desactivada hasta que se autorice un proveedor y un presupuesto.
 
-```bash
-pip install -r requirements.txt
-```
+Consulta [Estado del sistema y trabajo pendiente](docs/ESTADO_DEL_SISTEMA.md) para el inventario exacto de lo terminado, lo validado y lo que falta.
 
-4. Inicia AutoShorts:
+## Uso responsable del material
 
-```bash
-streamlit run app.py
-```
+Cada producción guarda un manifiesto con la página de origen, autor y licencia informados por Wikimedia Commons. Revisa ese manifiesto antes de publicar: AutoShorts automatiza la trazabilidad, pero no concede derechos adicionales sobre los vídeos externos.
 
-## Primer canal
-
-`Lugares extraños` está configurado para vídeos de 35–50 segundos, español, 8 escenas, hook inmediato, tono intrigante, montaje rápido, material real prioritario y subtítulos palabra a palabra.
-
-El primer tema sugerido es: `La isla donde está prácticamente prohibido morir`.
-
-## Configuración
-
-- `MPT_API_URL`: URL de MoneyPrinterTurbo.
-- `MPT_API_KEY`: opcional si protegiste la API de MPT.
-- `OPENAI_API_KEY`: opcional en esta V1. Sin ella AutoShorts puede trabajar con un tema/guion manual; la siguiente capa editorial puede conectarse a un LLM.
-
-No subas `.env` ni `config.toml` con credenciales al repositorio.

@@ -1,0 +1,17 @@
+AUTOSHORTS LOCAL
+================
+
+Para abrir la herramienta:
+
+1. Haz doble clic en ABRIR AUTOSHORTS.bat
+2. La primera vez se instalaran automaticamente Python, FFmpeg y la voz local.
+3. Espera a que se abra el panel en el navegador.
+4. Elige una idea y pulsa CREAR VIDEO COMPLETO AUTOMATICAMENTE.
+5. AutoShorts buscara clips libres, registrara sus licencias y generara el resto.
+
+Si algo falla, ejecuta DIAGNOSTICO.bat.
+
+Los proyectos se guardan dentro de studio_data. Solo se consulta Wikimedia Commons
+para buscar y descargar metraje libre; no se suben tus proyectos.
+No se activa ningun proveedor de pago.
+
