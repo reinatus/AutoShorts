@@ -64,6 +64,11 @@ def validate_media_records(records: Iterable[dict]) -> list[dict]:
                 "source": source,
                 "license": license_name,
                 "relevance": relevance,
+                **{
+                    key: raw[key]
+                    for key in ("license_url", "artist", "download_url", "automatic_selection", "original_filename")
+                    if key in raw
+                },
             }
         )
 
@@ -147,3 +152,4 @@ def project_archive_bytes(project: Path) -> bytes:
             if path.is_file():
                 archive.write(path, arcname=filename)
     return buffer.getvalue()
+
