@@ -1,0 +1,13 @@
+AUTOSHORTS LOCAL - PRIMEROS PASOS
+
+1. La primera vez, haz doble clic en INSTALAR.bat.
+2. Cuando termine, abre siempre ABRIR AUTOSHORTS.bat.
+3. El panel se abrirá en el navegador en http://127.0.0.1:8501.
+4. Crea o elige un proyecto, revisa sus ideas y entra en "Generar vídeo".
+5. Usa únicamente clips propios o con licencia comprobable.
+6. Al terminar, descarga el vídeo, la portada y el paquete ZIP desde "Entregables".
+
+La instalación y el render local no usan APIs de pago. Para cerrar AutoShorts,
+cierra la ventana negra que permanece abierta mientras el panel está funcionando.
+
+Si algo falla, ejecuta DIAGNOSTICO.bat y conserva el resultado.
