@@ -1,6 +1,6 @@
 # Estado real de AutoShorts
 
-Actualizado: 28 de octubre de 2026.
+Actualizado: 1 de noviembre de 2026.
 
 ## Terminado e implementado
 
@@ -10,17 +10,21 @@ Actualizado: 28 de octubre de 2026.
 - Generacion de guion editorial, titulo, descripcion, hashtags, palabras clave y CTA.
 - Limite de coste por Short y bloqueo sobre el presupuesto configurado.
 - Flujo documental del pulpo con material real curado.
-- Flujo generico de 40 segundos usando tres o mas clips reales aportados por el usuario.
+- Flujo automático de 40 segundos con búsqueda y descarga de vídeos reales en Wikimedia Commons.
+- Selección por tema, exclusión de resultados irrelevantes, resolución mínima y preferencia por primer plano.
+- Registro automático de página de origen, autor, licencia, URL de licencia y huella SHA-256.
 - Narracion local con Piper, subtitulos, apertura, cierre, CTA, portada y paquete de publicacion.
 - Instalador Windows autocontenido con Python portatil, FFmpeg y Piper.
 - Diagnostico y arranque con espera activa antes de abrir el navegador.
 - Sin APIs de pago activadas por defecto.
-- Revision previa con vista de clips, funcion narrativa y storyboard de 40 segundos.
+- Storyboard automático de 40 segundos y detención segura si no hay al menos tres clips relacionados.
 - Validacion de formato, tamano, duplicados, fuentes y licencias.
 - Manifiesto de medios guardado junto a cada produccion.
 - Estado de render, conservacion de errores y reintento desde Entregables.
 - Descarga ZIP con video, portada, guion, publicacion, storyboard y licencias.
 - Subtitulos de bloques mas cortos y margenes seguros reforzados.
+- Eliminación automática de barras negras incrustadas y normalización de relación de píxel.
+- Portada automática con fotograma real, oscurecido, color del proyecto y titular dentro de zona segura.
 
 ## Verificado
 
@@ -28,15 +32,17 @@ Actualizado: 28 de octubre de 2026.
 - Descarga y verificacion SHA-256 de uv, Python, FFmpeg, Piper y la voz.
 - Diagnostico completo: Python, dependencias, compilacion, FFmpeg, Piper, voz, plantilla, panel y escritura.
 - Arranque real del panel y respuesta HTTP 200 en Windows.
-- El render del pulpo existente y la logica del panel fueron probados durante el desarrollo anterior.
+- Render completo del pulpo verificado y decodificado sin errores.
+- Producción automática del cuervo ejecutada de extremo a extremo: búsqueda, seis descargas, licencias, voz, montaje de 40 segundos, subtítulos y portada.
+- Suite automatizada: 17 pruebas superadas.
 
 No se afirma como probado un render completo de cada idea del banco ni todos los equipos Windows posibles.
 
 ## Pendiente imprescindible para considerar el sistema terminado
 
-1. **Probar de extremo a extremo varios videos nuevos.** Renderizar, revisar y aprobar al menos tres Shorts de tematicas distintas desde el panel, incluyendo descarga del paquete final.
-2. **Biblioteca visual por idea.** Preparar material real especifico, sin repeticiones ni planos genericos, para cada idea prioritaria. Ahora solo el pulpo tiene una ruta curada propia.
-3. **Auditar los derechos registrados.** El panel ya obliga a guardar fuente, licencia y funcion de cada clip; falta comprobar manualmente que la informacion aportada sea correcta.
+1. **Probar más temáticas de extremo a extremo.** El pulpo y el cuervo ya se han renderizado; faltan pruebas representativas de historia, lugares, ciencia y tecnología.
+2. **Calidad desigual de archivos libres.** La automatización rechaza coincidencias obvias y baja resolución, pero un vídeo técnicamente válido puede tener encuadre o calidad editorial mediocre.
+3. **Auditar licencias antes de publicar.** El manifiesto se completa automáticamente con los datos de Commons; todavía conviene verificar la página de cada archivo.
 4. **Edicion visual mas profunda.** La vista previa y el storyboard ya existen; falta recortar cada clip, cambiar su orden mediante controles y sustituir planos dentro de un proyecto ya guardado.
 5. **Validacion multiplataforma.** Los subtitulos ya son mas cortos y usan margenes mayores; falta comprobarlos con publicaciones de prueba en YouTube Shorts, TikTok e Instagram.
 6. **Calidad de voz.** Ajustar ritmo, pausas, pronunciaciones y normalizacion; Piper funciona, pero la voz sigue siendo sintetica.
@@ -50,7 +56,7 @@ No se afirma como probado un render completo de cada idea del banco ni todos los
 - edicion y duplicado de proyectos;
 - historial de versiones de guion y montaje;
 - copias de seguridad y migraciones de datos;
-- limites y validacion de archivos subidos;
+- más filtros automáticos de calidad visual, movimiento y similitud entre clips;
 - generacion de portadas mas avanzada que la extraccion/composicion actual;
 - metadatos especificos para cada plataforma;
 - registro real de costes por proveedor y por video;
@@ -66,3 +72,4 @@ No se afirma como probado un render completo de cada idea del banco ni todos los
 - publicacion automatica.
 
 Cualquier opcion de pago debe permanecer desactivada hasta que el usuario elija proveedor, precio maximo y regla de aprobacion. El objetivo sigue siendo 0,30-0,40 USD por Short y nunca superar 0,50 USD sin autorizacion explicita.
+
