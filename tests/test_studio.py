@@ -50,6 +50,11 @@ def test_uploaded_renderer_requires_visual_variety(tmp_path: Path):
         raise AssertionError("El render debe impedir montajes con un solo clip.")
 
 
+def test_uploaded_renderer_normalizes_pixel_aspect_ratio():
+    source = Path(__file__).parents[1] / "autoshorts" / "studio.py"
+    assert "crop=1080:1920,setsar=1,fps=30" in source.read_text(encoding="utf-8")
+
+
 def test_subtitles_include_body_and_final_cta():
     subtitles = _ass_subtitles("Una explicación breve que se reparte en subtítulos legibles.", "¿Qué piensas?")
     assert "Style: Body" in subtitles
@@ -57,3 +62,4 @@ def test_subtitles_include_body_and_final_cta():
     body_events = [line for line in subtitles.splitlines() if ",Body," in line]
     assert all(len(line.rsplit(",", 1)[-1].split()) <= 5 for line in body_events)
     assert "¿Qué piensas?" in subtitles
+
